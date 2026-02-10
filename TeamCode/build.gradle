@@ -64,6 +64,9 @@ dependencies {
     implementation 'com.pedropathing:ftc:2.0.3'
     implementation 'com.pedropathing:telemetry:1.0.0'
 
+    //marrow
+    implementation 'com.skeletonarmyftc.marrow:core:1.0.0'
+
     // Panels Dashboard
     implementation "com.bylazar:fullpanels:1.0.5"
 }
