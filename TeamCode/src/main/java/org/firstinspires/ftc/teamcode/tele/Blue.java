@@ -79,7 +79,7 @@ public class Blue extends OpMode {
         l2.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
 
         gate = new ServoEx(hardwareMap, "gate");
-        gate.set(globals.gate.close);
+        //gate.set(globals.gate.close);
         intake = new Motor(hardwareMap, "intake");
         transfer = new Motor(hardwareMap, "transfer");
         intake.setRunMode(Motor.RunMode.RawPower);
@@ -148,7 +148,7 @@ public class Blue extends OpMode {
                 l2.set(0.2);
                 intake.set(0.25);
                 transfer.set(0.25);
-                gate.set(globals.gate.close);
+                //gate.set(globals.gate.close);
                 break;
 
             case launching:
@@ -164,7 +164,7 @@ public class Blue extends OpMode {
                 }
 
                 if (launchPIDF.atSetPoint() && !robotLocation.equals("No Zone")) {
-                    gate.set(globals.gate.open);
+                    //gate.set(globals.gate.open);
                     if (Objects.equals(robotLocation, "Far Zone")) {
                         intake.set(.65);
                         transfer.set(0.65);
@@ -177,7 +177,7 @@ public class Blue extends OpMode {
             case intaking:
                 intake.set(0.7);
                 transfer.set(0.2);
-                gate.set(globals.gate.close);
+                //gate.set(globals.gate.close);
                 break;
         }
     }
