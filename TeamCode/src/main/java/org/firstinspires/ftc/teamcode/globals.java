@@ -35,21 +35,21 @@ public class globals {
 
     @Config
     public static class gate {
-        public static float close = 0.25F; //
-        public static float open = 0.5F;
+        public static float close = 0F; //
+        public static float open = 0.6F;
     }
 
     @Config
     public static class turret {
-        public static float turretOffset = -10F;
-        public static float goalY = 138;
-        public static float goalX = 4;
+        public static float turretOffset = 0F;
+        public static float goalY = 140;
+        public static float goalX = 7;
     }
 
 
 @Config
     public static class offsets{
-        public static double xoff = -129;
+        public static double xoff = -126;
         public static double yoff = -128;
     }
 }

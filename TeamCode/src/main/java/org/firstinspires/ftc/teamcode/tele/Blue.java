@@ -53,9 +53,12 @@ public class Blue extends OpMode {
     private String robotLocation = "No Zone";
     
     
-    private double lastTime, launchPower, RPM, previousRPM, dist, turretAng, targetRPM, hoodAngle, turretPos, leftY, leftX;
+    private double lastTime, launchPower, RPM, previousRPM, dist, turretAng, targetRPM, hoodAngle, leftY, leftX;
+    private double turretPos = 180F;
     private int lastPosition;
-    private boolean slowDrive, prevCross1, prevOptions2, autoAim;
+    private boolean slowDrive, prevCross1, prevOptions2;
+    private boolean autoAim = true;
+
     private static final FieldManager panelsField = PanelsField.INSTANCE.getField();
     private static final Style robotLook = new Style(
             "", "#3F51B5", 1
@@ -79,7 +82,7 @@ public class Blue extends OpMode {
         l2.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
 
         gate = new ServoEx(hardwareMap, "gate");
-        //gate.set(globals.gate.close);
+        gate.set(globals.gate.close);
         intake = new Motor(hardwareMap, "intake");
         transfer = new Motor(hardwareMap, "transfer");
         intake.setRunMode(Motor.RunMode.RawPower);
@@ -135,7 +138,7 @@ public class Blue extends OpMode {
         launchPIDF.setPID(globals.launcher.p, globals.launcher.i, globals.launcher.d);
         if (g2.getButton(GamepadKeys.Button.CROSS)) {
             currentLaunchState = launchState.launching;
-        } else if (g2.getButton(GamepadKeys.Button.TRIANGLE)) {
+        } else if (g2.getButton(GamepadKeys.Button.TRIANGLE) || g1.getButton(GamepadKeys.Button.TRIANGLE)) {
             currentLaunchState = launchState.intaking;
         } else {
             currentLaunchState = launchState.idle;
@@ -144,27 +147,27 @@ public class Blue extends OpMode {
         switch (currentLaunchState) {
 
             case idle:
-                l1.set(0.2);
-                l2.set(0.2);
-                intake.set(0.25);
-                transfer.set(0.25);
-                //gate.set(globals.gate.close);
+                l1.set(0);
+                l2.set(0);
+                intake.set(0);
+                transfer.set(0);
+                gate.set(globals.gate.close);
                 break;
 
             case launching:
                 hood.set(MathFunctions.clamp(hoodAngle, 40, 240));
                 launchPIDF.setSetPoint(targetRPM);
                 launchPower = launchPIDF.calculate(RPM);
-                if (RPM < 400) {
-                    l1.set(0.5);
-                    l2.set(0.5);
+                if (RPM < 600) {
+                    l1.set(0.43);
+                    l2.set(0.43);
                 } else {
                     l1.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
                     l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
                 }
 
                 if (launchPIDF.atSetPoint() && !robotLocation.equals("No Zone")) {
-                    //gate.set(globals.gate.open);
+                    gate.set(globals.gate.open);
                     if (Objects.equals(robotLocation, "Far Zone")) {
                         intake.set(.65);
                         transfer.set(0.65);
@@ -177,7 +180,7 @@ public class Blue extends OpMode {
             case intaking:
                 intake.set(0.7);
                 transfer.set(0.2);
-                //gate.set(globals.gate.close);
+                gate.set(globals.gate.close);
                 break;
         }
     }
@@ -227,7 +230,7 @@ public class Blue extends OpMode {
 
         if (robotZone.isInside(closeLaunchZone)) {
             targetRPM = 2414.2 * Math.exp(0.0036 * dist);
-            if (dist < 24) {
+            if (dist < 35) {
                 hoodAngle = 40;
             } else {
                 hoodAngle = 147.8 * Math.log(dist) - 441.52;
@@ -253,7 +256,7 @@ public class Blue extends OpMode {
             turret.set(setTurret(turretAng));
             turretPos = setTurret(turretAng);
         } else {
-            turretPos += g2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) - g2.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER);
+            turretPos -= 1.5 * (g2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) - g2.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER));
             turret.set(MathFunctions.clamp(turretPos, 50, 310));
         }
     }
