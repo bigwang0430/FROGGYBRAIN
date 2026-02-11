@@ -13,6 +13,7 @@ public class globals {
         public static float ks = 0.001F; //0.0000216
         public static float kv = 0.00018F; //0.000000120871
         public static float velTime = 0.05F;
+        public static float airSortThreshold = 20F;
 
     }
 

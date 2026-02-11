@@ -56,8 +56,10 @@ public class Blue extends OpMode {
     private double lastTime, launchPower, RPM, previousRPM, dist, turretAng, targetRPM, hoodAngle, leftY, leftX;
     private double turretPos = 180F;
     private int lastPosition;
-    private boolean slowDrive, prevCross1, prevOptions2;
-    private boolean autoAim = true;
+    private boolean prevCross1, prevOptions2;
+    private boolean autoAim = true, dip1 = false, dip2 = true;
+    private boolean slowDrive = false;
+    private int ballsLaunched = 0;
 
     private static final FieldManager panelsField = PanelsField.INSTANCE.getField();
     private static final Style robotLook = new Style(
@@ -117,9 +119,10 @@ public class Blue extends OpMode {
         drive();
         launch();
         drawRobot(follower.getPose(), robotLook);
-        telemetry.update();
+
         telemetry.addData("loop time", timer.seconds());
         timer.reset();
+        telemetry();
     }
 
     private void telemetry() {
@@ -132,6 +135,7 @@ public class Blue extends OpMode {
 
         FtcDashboard.getInstance().sendTelemetryPacket(powerPacket);
         FtcDashboard.getInstance().sendTelemetryPacket(rpmPacket);
+        telemetry.update();
     }
 
     private void launch() {
@@ -147,6 +151,9 @@ public class Blue extends OpMode {
         switch (currentLaunchState) {
 
             case idle:
+                ballsLaunched = 0;
+                dip1 = false;
+                dip2 = true;
                 l1.set(0);
                 l2.set(0);
                 intake.set(0);
@@ -164,6 +171,25 @@ public class Blue extends OpMode {
                 } else {
                     l1.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
                     l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
+                }
+
+                boolean RPMdip = previousRPM - RPM > 300;
+                if (RPMdip && !dip1) {
+                    ballsLaunched++;
+                    dip1 = true;
+                    dip2 = false;
+                } else if (RPMdip && !dip2) {
+                    ballsLaunched++;
+                    dip2 = true;
+                }
+
+
+                if (ballsLaunched == 0) {
+                    hood.set(MathFunctions.clamp(hoodAngle, 40, 240));
+                } else if (ballsLaunched == 1) {
+                    hood.set(MathFunctions.clamp(hoodAngle - globals.launcher.airSortThreshold, 40, 240));
+                } else {
+                    hood.set(MathFunctions.clamp(hoodAngle, 40, 240));
                 }
 
                 if (launchPIDF.atSetPoint() && !robotLocation.equals("No Zone")) {
