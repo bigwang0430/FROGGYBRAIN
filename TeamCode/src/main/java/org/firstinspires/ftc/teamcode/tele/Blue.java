@@ -120,13 +120,15 @@ public class Blue extends OpMode {
         launch();
         drawRobot(follower.getPose(), robotLook);
 
-        telemetry.addData("loop time", timer.seconds());
-        timer.reset();
+
         telemetry();
     }
 
     private void telemetry() {
         telemetry.addData("autoaim", autoAim);
+        telemetry.addData("robotLocation", robotLocation);
+        telemetry.addData("loop time", timer.seconds());
+        timer.reset();
         TelemetryPacket rpmPacket = new TelemetryPacket();
         rpmPacket.put("RPM", RPM);
 
@@ -198,8 +200,8 @@ public class Blue extends OpMode {
                         intake.set(.65);
                         transfer.set(0.65);
                     } else {
-                        intake.set(0.85);
-                        transfer.set(0.85);
+                        intake.set(0.9);
+                        transfer.set(0.9);
                     }
                 }
                 break;
@@ -334,7 +336,6 @@ public class Blue extends OpMode {
     }
 
     private double setTurret(double ang) {
-
         ang = 180 - ((ang * 3) / 2) - globals.turret.turretOffset;
         return ang;
     }
