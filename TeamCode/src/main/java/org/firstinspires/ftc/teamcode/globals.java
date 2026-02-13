@@ -12,7 +12,7 @@ public class globals {
         public static float d = 0F;
         public static float ks = 0.001F; //0.0000216
         public static float kv = 0.00018F; //0.000000120871
-        public static float velTime = 0.05F;
+        public static float velTime = 0.07F;
         public static float airSortThreshold = 20F;
 
     }
@@ -42,9 +42,9 @@ public class globals {
 
     @Config
     public static class turret {
-        public static float turretOffset = 0F;
+        public static float turretOffset = 6F;
         public static float goalY = 140;
-        public static float goalX = 7;
+        public static float goalX = 4;
     }
 
 

@@ -10,6 +10,8 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.math.MathFunctions;
 import com.pedropathing.math.Vector;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
+import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -22,6 +24,7 @@ import com.skeletonarmy.marrow.zones.Point;
 import com.skeletonarmy.marrow.zones.PolygonZone;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.teamcode.globals;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
@@ -65,7 +68,17 @@ public class Blue extends OpMode {
     private static final Style robotLook = new Style(
             "", "#3F51B5", 1
     );
-    
+
+    private Limelight3A limelight;
+
+    private double xEst = 0, yEst = 0, hEst = 0;   // odometry estimate
+    private double pX = globals.kalman.pX0, pY = globals.kalman.pY0, pH = 1; // odometry error
+
+    private static final double M_TO_IN = 39.37007874015748;
+
+    private Pose fusedPose = new Pose(0, 0, 0);
+    private Pose odoPose = new Pose(0, 0, 0);
+
     @Override
     public void init() {
         timer.startTime();
@@ -108,6 +121,21 @@ public class Blue extends OpMode {
         while (timer.seconds() < 0.5) {
             telemetry.addData("timer", timer.seconds());
             telemetry.update();
+        }
+
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        limelight.setPollRateHz(50);
+        limelight.start();
+        limelight.pipelineSwitch(0);
+
+        // Initialize estimate to odometry so don't start at 0,0,0
+        Pose p = follower.getPose();
+        if (p != null) {
+            xEst = p.getX();
+            yEst = p.getY();
+            hEst = p.getHeading();
+            fusedPose = new Pose(xEst, yEst, hEst);
+            odoPose = p;
         }
     }
 
@@ -168,8 +196,8 @@ public class Blue extends OpMode {
                 launchPIDF.setSetPoint(targetRPM);
                 launchPower = launchPIDF.calculate(RPM);
                 if (RPM < 600) {
-                    l1.set(0.43);
-                    l2.set(0.43);
+                    l1.set(0.4);
+                    l2.set(0.4);
                 } else {
                     l1.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
                     l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
@@ -197,17 +225,17 @@ public class Blue extends OpMode {
                 if (launchPIDF.atSetPoint() && !robotLocation.equals("No Zone")) {
                     gate.set(globals.gate.open);
                     if (Objects.equals(robotLocation, "Far Zone")) {
-                        intake.set(.65);
-                        transfer.set(0.65);
+                        intake.set(.7);
+                        transfer.set(0.7);
                     } else {
-                        intake.set(0.9);
-                        transfer.set(0.9);
+                        intake.set(0.95);
+                        transfer.set(0.95);
                     }
                 }
                 break;
             case intaking:
                 intake.set(0.7);
-                transfer.set(0.2);
+                transfer.set(0.5);
                 gate.set(globals.gate.close);
                 break;
         }
@@ -361,5 +389,50 @@ public class Blue extends OpMode {
         panelsField.setStyle(style);
         panelsField.moveCursor(x1, y1);
         panelsField.line(x2, y2);
+        panelsField.update();
     }
+
+    public void updateKalman() {
+        Pose odo = follower.getPose();
+        if (odo == null) return;
+
+        odoPose = odo;
+
+        // Prediction
+        double xPred = odo.getX(), yPred = odo.getY(), hPred = odo.getHeading();
+        double pXPred = pX + globals.kalman.qX;
+        double pYPred = pY + globals.kalman.qY;
+        double pHPred = pH;
+
+
+        // no measurement = keep position
+        xEst = xPred; yEst = yPred; hEst = hPred;
+        pX = pXPred; pY = pYPred; pH = pHPred;
+
+        LLResult r = limelight.getLatestResult();
+        if (r != null && r.isValid()) {
+            Pose3D bot = r.getBotpose();
+            if (bot != null) {
+                double zX = 72 + (bot.getPosition().y * M_TO_IN);
+                double zY = 72 - (bot.getPosition().x * M_TO_IN);
+
+
+                double kX = pXPred / (pXPred + globals.kalman.rX);
+                double kY = pYPred / (pYPred + globals.kalman.rY);
+
+                xEst = xPred + kX * (zX - xPred);
+                yEst = yPred + kY * (zY - yPred);
+
+                pX = (1.0 - kX) * pXPred;
+                pY = (1.0 - kY) * pYPred;
+            }
+        }
+
+        fusedPose = new Pose(xEst, yEst, hEst);
+
+        if (g2.getButton(GamepadKeys.Button.RIGHT_BUMPER) && (Math.abs(fusedPose.getX() - follower.getPose().getX()) < 5) &&  (Math.abs(fusedPose.getY() - follower.getPose().getY()) < 5)) {
+            follower.setPose(fusedPose);
+        }
+    }
+
 }
