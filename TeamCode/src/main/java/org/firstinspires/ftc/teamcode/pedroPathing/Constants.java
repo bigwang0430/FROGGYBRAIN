@@ -16,22 +16,9 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
-            .mass(12.5)
-            .forwardZeroPowerAcceleration(-42.5)
-            .lateralZeroPowerAcceleration(-73)
-
             .useSecondaryTranslationalPIDF(true)
             .useSecondaryHeadingPIDF(true)
             .useSecondaryDrivePIDF(false)
-
-            .translationalPIDFCoefficients(new PIDFCoefficients(0.04, 0.00001, 0.000005, 0.02))
-            .secondaryTranslationalPIDFCoefficients(new PIDFCoefficients(0.08,0.0005,0.00005,0.02))
-
-            .headingPIDFCoefficients(new PIDFCoefficients(0.5, 0, 0.000005, 0.02))
-            .secondaryHeadingPIDFCoefficients(new PIDFCoefficients(1,0,0.0001,0.02))
-
-            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.006,0.0,0.00001,0.6,0.0))
-            .secondaryDrivePIDFCoefficients(new FilteredPIDFCoefficients(0.03, 0, 0.0001, 0.6, 0.07))
             ;
 
     public static MecanumConstants driveConstants = new MecanumConstants()
@@ -44,13 +31,10 @@ public class Constants {
             .leftRearMotorDirection(DcMotorSimple.Direction.FORWARD)
             .rightFrontMotorDirection(DcMotorSimple.Direction.REVERSE)
             .rightRearMotorDirection(DcMotorSimple.Direction.REVERSE)
-
-            .xVelocity(76)
-            .yVelocity(58)
             ;
 
     public static PinpointConstants localizerConstants = new PinpointConstants()
-            .forwardPodY(-4.72441)//120mm
+            .forwardPodY(4.72441)//120mm
             .strafePodX(-4.88189)//124mm
             .distanceUnit(DistanceUnit.INCH)
             .hardwareMapName("pinpoint")
@@ -59,7 +43,7 @@ public class Constants {
             .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD);
 
 
-    public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 0.4, 1);
+    public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
 
     public static Follower createFollower(HardwareMap hardwareMap) {
         return new FollowerBuilder(followerConstants, hardwareMap)
