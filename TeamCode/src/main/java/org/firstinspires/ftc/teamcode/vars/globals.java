@@ -57,7 +57,7 @@ public class globals {
 
 @Config
     public static class offsets{
-        public static double xoff = -126;
-        public static double yoff = -128;
+        public static double xoff = 85;
+        public static double yoff = -131.25;
     }
 }

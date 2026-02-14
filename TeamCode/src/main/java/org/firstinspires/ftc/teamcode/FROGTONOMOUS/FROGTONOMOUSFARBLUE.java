@@ -37,7 +37,7 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
     private Follower follower;
     TelemetryData telemetryData = new TelemetryData(telemetry);
     private ElapsedTime timer = new ElapsedTime();
-    public PathChain Path1, Path2, Path3, Path4, Path5, Path6, Path7, Path8;
+    public PathChain Path1, Path2, Path3, Path4, Path5, Path6, Path7, Path8, Path9;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -46,9 +46,9 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
     public void buildpath() {
         Path1 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(45.000, 9.000),
+                                new Pose(44.000, 9.000),
 
-                                new Pose(10.000, 9.000)
+                                new Pose(11.000, 9.000)
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -56,9 +56,9 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
 
         Path2 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(10.000, 9.000),
+                                new Pose(11.000, 9.000),
 
-                                new Pose(45.000, 9.000)
+                                new Pose(48.000, 9.000)
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -66,49 +66,49 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
 
         Path3 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(45.000, 9.000),
+                                new Pose(48.000, 9.000),
 
-                                new Pose(13.000, 21.000)
+                                new Pose(42.500, 35.500)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(135))
+                ).setConstantHeadingInterpolation(Math.toRadians(180))
 
                 .build();
 
         Path4 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(13.000, 21.000),
+                                new Pose(42.500, 35.500),
 
-                                new Pose(45.000, 9.000)
+                                new Pose(25.000, 35.500)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(135), Math.toRadians(180))
+                ).setConstantHeadingInterpolation(Math.toRadians(180))
 
                 .build();
 
         Path5 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(45.000, 9.000),
+                                new Pose(25.000, 35.500),
 
-                                new Pose(45.000, 36.000)
+                                new Pose(50.000, 13.000)
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(111))
 
                 .build();
 
         Path6 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(45.000, 36.000),
+                                new Pose(50.000, 13.000),
 
-                                new Pose(24.000, 36.000)
+                                new Pose(42.500, 60.000)
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setLinearHeadingInterpolation(Math.toRadians(111), Math.toRadians(180))
 
                 .build();
 
         Path7 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(24.000, 36.000),
+                                new Pose(42.500, 60.000),
 
-                                new Pose(45.000, 9.000)
+                                new Pose(25.000, 60.000)
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -116,11 +116,21 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
 
         Path8 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(45.000, 9.000),
+                                new Pose(25.000, 60.000),
 
-                                new Pose(37.000, 9.000)
+                                new Pose(53.000, 14.000)
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(112))
+
+                .build();
+
+        Path9 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(53.000, 14.000),
+
+                                new Pose(49.813, 21.831)
+                        )
+                ).setConstantHeadingInterpolation(Math.toRadians(112))
 
                 .build();
     }
@@ -164,15 +174,13 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
             hood = new ServoEx(hardwareMap, "hood", 300, AngleUnit.DEGREES);
 
             launchPIDF.setTolerance(50);
+            launchPIDF.setPID(globals.launcher.p, globals.launcher.i, globals.launcher.d);
         }
 
         public void intaking(){
             intake.set(0.7);
             transfer.set(0.2);
             gate.set(globals.gate.close);
-            dip1 = false;
-            dip2 = false;
-            ballsLaunched = 0;
         }
 
         public void launchcalc(){
@@ -218,9 +226,6 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
             }
         }
         public void launch(){
-            launchPIDF.setPID(globals.launcher.p, globals.launcher.i, globals.launcher.d);
-
-            hood.set(MathFunctions.clamp(hoodAngle, 40, 240));
             launchPIDF.setSetPoint(targetRPM);
             launchPower = launchPIDF.calculate(RPM);
             if (RPM < 600) {
@@ -229,6 +234,12 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
             } else {
                 l1.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
                 l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
+            }
+
+            if (launchPIDF.atSetPoint()) {
+                gate.set(globals.gate.open);
+                intake.set(0.65);
+                transfer.set(0.65);
             }
 
             boolean RPMdip = previousRPM - RPM > 300;
@@ -240,20 +251,16 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
                 ballsLaunched++;
                 dip2 = true;
             }
-
-            if (launchPIDF.atSetPoint()) {
-                    gate.set(globals.gate.open);
-                    intake.set(0.65);
-                    transfer.set(0.65);
-                }
-            }
+        }
 
             public void launchend(){
                 l1.set(0.2);
                 l2.set(0.2);
                 intake.set(0);
+                dip1 = false;
+                dip2 = false;
+                ballsLaunched = 0;
             }
-
             public boolean launched(){
                 if (ballsLaunched >= 2){
                     return true;
