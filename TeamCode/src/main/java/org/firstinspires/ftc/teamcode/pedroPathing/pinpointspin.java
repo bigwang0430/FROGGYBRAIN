@@ -9,7 +9,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.teamcode.globals;
+import org.firstinspires.ftc.teamcode.vars.globals;
 
 @TeleOp(name = "Pinpoint Spin Offset Test (Degrees)", group = "Test")
 public class pinpointspin extends LinearOpMode {

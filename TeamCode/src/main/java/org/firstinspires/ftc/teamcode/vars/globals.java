@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode;
+package org.firstinspires.ftc.teamcode.vars;
 import com.acmerobotics.dashboard.config.Config;
 
 @Config
@@ -45,6 +45,13 @@ public class globals {
         public static float turretOffset = 6F;
         public static float goalY = 140;
         public static float goalX = 4;
+
+        public static float p = 0F;
+        public static float i = 0F;
+        public static float d = 0F;
+
+        public static float turretTarget = 0F;
+
     }
 
 
