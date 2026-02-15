@@ -21,6 +21,8 @@ import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 import com.seattlesolvers.solverslib.command.WaitCommand;
 import com.seattlesolvers.solverslib.controller.PIDController;
+import com.seattlesolvers.solverslib.hardware.motors.CRServo;
+import com.seattlesolvers.solverslib.hardware.motors.CRServoEx;
 import com.seattlesolvers.solverslib.hardware.motors.Motor;
 import com.seattlesolvers.solverslib.hardware.motors.MotorEx;
 import com.seattlesolvers.solverslib.hardware.servos.ServoEx;
@@ -141,8 +143,10 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
     //SUBSYSTEMS///////////////////////////////////////////////////////////////////////////////////////////////////
 
     public class everythingsubsys extends SubsystemBase {
-        private ServoEx turret, hood, gate;
+        private ServoEx hood, gate;
+        private CRServo t1, t2;
         private double dist, turretAng = 0, targetRPM, hoodAngle, RPM, lastTime, lastPosition, previousRPM, launchPower;
+        private PIDController turretPIDF = new PIDController(globals.turret.pFar, globals.turret.i, globals.turret.d);
         private int ballsLaunched = 0;
         private MotorEx l1, l2, intake, transfer;
         private PIDController launchPIDF = new PIDController(globals.launcher.p, globals.launcher.i, globals.launcher.d);
@@ -151,9 +155,13 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
 
         private boolean dip1 = false, dip2 = false;
         public everythingsubsys(HardwareMap hardwareMap){
-            turret = new ServoEx(hardwareMap, "t2", 360, AngleUnit.DEGREES);
-            turret.setInverted(true);
-            turret.set(180);
+            t1 = new CRServoEx(hardwareMap, "t1");
+            t2 = new CRServoEx(hardwareMap, "t2");
+            t2.setInverted(true);
+            t1.setInverted(true);
+            turretPIDF.setTolerance(30);
+            t1.set(0.001);
+            t2.set(0.001);
 
             intake = new MotorEx(hardwareMap, "intake");
             transfer = new MotorEx(hardwareMap, "transfer");
@@ -163,6 +171,8 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
             intake.setInverted(false);
             intake.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
             transfer.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
+            intake.stopAndResetEncoder();
+            intake.resetEncoder();
 
             l1 = new MotorEx(hardwareMap, "l1", 28, 6000);
             l2 = new MotorEx(hardwareMap, "l2", 28, 6000);
@@ -204,18 +214,36 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
             dist = robotToGoal.getMagnitude();
 
             targetRPM = 13.09 * dist + 2164.9;
-            hoodAngle = 240;
+            hoodAngle = 204;
 
-            if (Math.abs(turretAng) > 115) {
+            if (Math.abs(turretAng) > 120) {
                 turretAng = 0;
             }
 
-            turret.set(setTurret(turretAng));
+            double turretTarget = degresToTicks((turretAng * 3));
+            turretPIDF.setSetPoint(turretTarget);
+            if (turretPIDF.getPositionError() > 500) {
+                turretPIDF.setP(globals.turret.pFar);
+            } else {
+                turretPIDF.setP(globals.turret.pClose);
+            }
+
+            double turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
+            if (!turretPIDF.atSetPoint()) {
+                t1.set(setTurret(turretPower));
+                t2.set(setTurret(turretPower));
+            } else {
+                t1.set(0);
+                t2.set(0);
+            }
         }
-        private double setTurret(double hello) {
-            hello = 180 - ((hello * 3) / 2) - globals.turret.turretOffset;
-            return hello;
+        private double setTurret(double power) {
+            return Math.signum(power) * (Math.abs(power) + globals.turret.ks);
         }
+        private double degresToTicks(double degree) {
+            return (degree * 8192) / 360;
+        }
+
         public void RPM() {
             double currentTime = getRuntime();
             int currentPosition = l1.getCurrentPosition();
@@ -232,6 +260,7 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
                 lastPosition = currentPosition;
             }
         }
+
         public void launch(){
             launchPIDF.setSetPoint(targetRPM);
             launchPower = launchPIDF.calculate(RPM);

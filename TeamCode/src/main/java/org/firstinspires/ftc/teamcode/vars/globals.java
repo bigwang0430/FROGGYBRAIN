@@ -7,7 +7,7 @@ public class globals {
     public static class launcher {
 
 
-        public static float p =0.005F; //0.001
+        public static float p =0.006F; //0.001
         public static float i = 0.1F;
         public static float d = 0F;
         public static float ks = 0.001F; //0.0000216
@@ -46,12 +46,12 @@ public class globals {
         public static float goalY = 140;
         public static float goalX = 4;
 
-        public static float p = 0.000056F;
+        public static float pFar = 0.000056F;
         public static float i = 0F;
         public static float d = 0.000001F;
-        public static float ks = 0.08F;
+        public static float ks = 0.09F;
 
-        public static float pZero = 0.0000005F;
+        public static float pClose = 0.00007F;
 
 
         public static float turretTarget = 0F;
