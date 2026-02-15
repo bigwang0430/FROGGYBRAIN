@@ -17,11 +17,11 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.command.CommandBase;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.ParallelDeadlineGroup;
+import com.seattlesolvers.solverslib.command.ParallelRaceGroup;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 import com.seattlesolvers.solverslib.command.WaitCommand;
 import com.seattlesolvers.solverslib.controller.PIDController;
-import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 import com.seattlesolvers.solverslib.hardware.motors.CRServo;
 import com.seattlesolvers.solverslib.hardware.motors.CRServoEx;
 import com.seattlesolvers.solverslib.hardware.motors.Motor;
@@ -44,6 +44,8 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
     private Follower follower;
     TelemetryData telemetryData = new TelemetryData(telemetry);
     private ElapsedTime timer = new ElapsedTime();
+    private boolean scheduled = false;
+    private SequentialCommandGroup froggyroute;
     public PathChain Path1, Path2, Path3, Path4, Path5, Path6, Path7, Path8, Path9, Path10;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -209,7 +211,6 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
             transfer.set(0.2);
             gate.set(globals.gate.close);
         }
-
         public void launchcalc() {
             double x = follower.getPose().getX();
             double y = follower.getPose().getY();
@@ -248,6 +249,9 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
                 t1.set(0.001);
                 t2.set(0.001);
             }
+        }
+        public void intakedone(){
+            intake.set(0);
         }
         private double setTurret(double power) {
             return Math.signum(power) * (Math.abs(power) + globals.turret.ks);
@@ -306,7 +310,6 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
                 hood.set(MathFunctions.clamp(hoodAngle- 12, 40, 211.5));
             }
         }
-
         public void launchend(){
             l1.set(0.2);
             l2.set(0.2);
@@ -518,6 +521,11 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
             everythingsubsystem.intaking();
         }
 
+        @Override
+        public void end(boolean interrupted){
+            everythingsubsystem.intakedone();
+        }
+
     }
     public static class froggyhunting extends CommandBase {
         private final visionsubsys visionsubsystem;
@@ -550,6 +558,13 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
         visionsubsys visionsubsystem = new visionsubsys(hardwareMap);
         everythingsubsys everythingsubsystem = new everythingsubsys(hardwareMap);
 
+        GoBildaPinpointDriver pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+        pinpoint.resetPosAndIMU();
+
+        long start = System.currentTimeMillis();
+        while (System.currentTimeMillis() - start < 1000) {
+        }
+
         follower = Constants.createFollower(hardwareMap);
         follower.setStartingPose(new Pose(40, 9, Math.toRadians(180)));//todo
 
@@ -557,10 +572,12 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
 
         register(everythingsubsystem);
 
-        SequentialCommandGroup froggyroute = new SequentialCommandGroup(
 
-                        new froggylaunch(everythingsubsystem),
-
+        froggyroute = new SequentialCommandGroup(
+                new ParallelRaceGroup(
+                        new WaitCommand(4000),
+                        new froggylaunch(everythingsubsystem)
+                        ),
                 new ParallelDeadlineGroup(
                         new FollowPathCommand(follower, Path1),
                         new froggyeat(everythingsubsystem)
@@ -600,12 +617,15 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
                 ),
                 new FollowPathCommand(follower, Path10)
         );
-        schedule(froggyroute);
     }
 
     //RUN//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     @Override
     public void run() {
+        if (!scheduled) {
+            schedule(froggyroute);
+            scheduled = true;
+        }
         super.run();
         follower.update();
 
