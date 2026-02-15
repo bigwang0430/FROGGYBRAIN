@@ -18,16 +18,21 @@ public class Constants {
     public static FollowerConstants followerConstants = new FollowerConstants()
             .mass(13.3)
 
-            .forwardZeroPowerAcceleration(-37.68)
+            .forwardZeroPowerAcceleration(-36.68)
             .lateralZeroPowerAcceleration(-69.60)
 
             .useSecondaryTranslationalPIDF(true)
             .useSecondaryHeadingPIDF(true)
             .useSecondaryDrivePIDF(true)
 
-            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.004,0.0,0.0007,0.1,0.08))
-            .secondaryDrivePIDFCoefficients(new FilteredPIDFCoefficients(0.006, 0.0, 0.00001, 0.1, 0.08))
+            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.006, 0, 0.0001, 0.1, 0.04))//0.005
+            .secondaryDrivePIDFCoefficients(new FilteredPIDFCoefficients(0.008, 0, 0.0003, 0.1, 0.04))//0.003
 
+            .headingPIDFCoefficients(new PIDFCoefficients(0.5, 0, 0.01, 0.02))
+            .secondaryHeadingPIDFCoefficients(new PIDFCoefficients(2, 0, 0.09, 0.02))
+
+            .translationalPIDFCoefficients(new PIDFCoefficients(0.065, 0, 0.005, 0.02))
+            .secondaryTranslationalPIDFCoefficients(new PIDFCoefficients(0.17, 0, 0.02, 0.02))
             ;
 
     public static MecanumConstants driveConstants = new MecanumConstants()
@@ -55,7 +60,7 @@ public class Constants {
             .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD);
 
 
-    public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 0.6, 1);
+    public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1.2, 1);
 
     public static Follower createFollower(HardwareMap hardwareMap) {
         return new FollowerBuilder(followerConstants, hardwareMap)
