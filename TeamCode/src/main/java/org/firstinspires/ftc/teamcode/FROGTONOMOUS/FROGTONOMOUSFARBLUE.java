@@ -21,6 +21,7 @@ import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 import com.seattlesolvers.solverslib.command.WaitCommand;
 import com.seattlesolvers.solverslib.controller.PIDController;
+import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 import com.seattlesolvers.solverslib.hardware.motors.CRServo;
 import com.seattlesolvers.solverslib.hardware.motors.CRServoEx;
 import com.seattlesolvers.solverslib.hardware.motors.Motor;
@@ -32,6 +33,7 @@ import com.skeletonarmy.marrow.zones.Point;
 import com.skeletonarmy.marrow.zones.PolygonZone;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.teamcode.vars.globals;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
@@ -213,7 +215,7 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
             turretAng = Math.toDegrees(AngleUnit.normalizeRadians(follower.getHeading() - goalAngle));
             dist = robotToGoal.getMagnitude();
 
-            targetRPM = 13.09 * dist + 2164.9;
+            targetRPM = (13.09 * dist + 2164.9) * 1.015;
             hoodAngle = 204;
 
             if (Math.abs(turretAng) > 120) {
@@ -264,7 +266,7 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
         public void launch(){
             launchPIDF.setSetPoint(targetRPM);
             launchPower = launchPIDF.calculate(RPM);
-            if (RPM < 600) {
+            if (RPM < 300) {
                 l1.set(0.35);
                 l2.set(0.35);
             } else {
@@ -278,7 +280,7 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
                 transfer.set(0.65);
             }
 
-            boolean RPMdip = previousRPM - RPM > 200;
+            boolean RPMdip = previousRPM - RPM > 100;
             if (RPMdip && !dip1) {
                 ballsLaunched++;
                 dip1 = true;
@@ -286,6 +288,13 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
             } else if (RPMdip && !dip2 && dip1) {
                 ballsLaunched++;
                 dip2 = true;
+            }
+            if (ballsLaunched == 0) {
+                hood.set(MathFunctions.clamp(hoodAngle, 40, 204));
+            } else if (ballsLaunched == 1) {
+                hood.set(MathFunctions.clamp(hoodAngle - 5, 40, 204));
+            } else {
+                hood.set(MathFunctions.clamp(hoodAngle- 12, 40, 204));
             }
         }
 
@@ -318,6 +327,14 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
         private Motor fl, bl, fr, br;
         public boolean hunted;
         private int alignedticks = 0;
+        private double xEst = 0, yEst = 0, hEst = 0;   // odometry estimate
+        private double pX = globals.kalman.pX0, pY = globals.kalman.pY0, pH = globals.pHg; // odometry error
+
+        private static final double M_TO_IN = 39.37007874015748;
+
+        private Pose fusedPose = new Pose(0, 0, 0);
+        private Pose odoPose = new Pose(0, 0, 0);
+        private double zH=0.0;
         public visionsubsys(HardwareMap hardwareMap){
             limelight = hardwareMap.get(Limelight3A.class, "limelight");
             limelight.setPollRateHz(50);
@@ -350,8 +367,65 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
         public void pipeline(int num){
             limelight.pipelineSwitch(num);
         }
+        public void relocalize() {
+            pipeline(0);
+            Pose odo = follower.getPose();
+            if (odo == null) return;
+
+            odoPose = odo;
+
+            // Prediction
+            double xPred = odo.getX(), yPred = odo.getY(), hPred = odo.getHeading();
+            double pXPred = pX + globals.kalman.qX;
+            double pYPred = pY + globals.kalman.qY;
+            double pHPred = pH + globals.qH;
+
+
+
+            // no measurement = keep position
+            xEst = xPred; yEst = yPred; hEst = hPred;
+            pX = pXPred; pY = pYPred; pH = pHPred;
+
+            LLResult r = limelight.getLatestResult();
+            if (r != null && r.isValid()) {
+                Pose3D bot = r.getBotpose();
+                if (bot != null) {
+                    double zX = 72 + (bot.getPosition().y * M_TO_IN);
+                    double zY = 72 - (bot.getPosition().x * M_TO_IN);
+                    zH = bot.getOrientation().getYaw(AngleUnit.RADIANS);
+                    zH-=Math.PI;
+                    zH += Math.PI / 2.0 ;
+                    zH = zH % (2.0 * Math.PI);
+                    if (zH < 0) zH += 2.0 * Math.PI;
+                    double headingError = zH - hPred;
+                    while (headingError > Math.PI) headingError -= 2.0 * Math.PI;
+                    while (headingError < -Math.PI) headingError += 2.0 * Math.PI;
+                    double kH = pHPred / (pHPred + globals.rH);
+                    hEst = hPred + kH * headingError;
+                    while (hEst > Math.PI) hEst -= 2.0 * Math.PI;
+                    while (hEst < -Math.PI) hEst += 2.0 * Math.PI;
+                    pH = (1.0 - kH) * pHPred;
+
+
+
+                    double kX = pXPred / (pXPred + globals.kalman.rX);
+                    double kY = pYPred / (pYPred + globals.kalman.rY);
+
+                    xEst = xPred + kX * (zX - xPred);
+                    yEst = yPred + kY * (zY - yPred);
+
+                    pX = (1.0 - kX) * pXPred;
+                    pY = (1.0 - kY) * pYPred;
+                }
+            }
+
+            fusedPose = new Pose(xEst, yEst, hEst);
+
+
+        }
 
         public void balltracking() {
+            pipeline(2);
             LLResult result = limelight.getLatestResult();
             if (result == null || !result.isValid() || result.getStaleness() >= 500) {
                 strafe(0);
