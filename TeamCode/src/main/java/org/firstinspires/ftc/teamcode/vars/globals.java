@@ -44,14 +44,14 @@ public class globals {
     public static class turret {
         public static float turretOffset = 6F;
         public static float goalY = 140;
-        public static float goalX = 4;
+        public static float goalX = 2;
 
-        public static float pFar = 0.000056F;
+        public static float pFar = 0.00004F;
         public static float i = 0F;
-        public static float d = 0.000001F;
-        public static float ks = 0.09F;
+        public static float d = 0.0000F;
+        public static float ks = 0.095F;
 
-        public static float pClose = 0.00007F;
+        public static float pClose = 0.000004F;
 
 
         public static float turretTarget = 0F;

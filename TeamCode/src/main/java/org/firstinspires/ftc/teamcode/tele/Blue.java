@@ -256,14 +256,14 @@ public class Blue extends OpMode {
 
                 if (robotZone.equals(farLaunchZone)) {
                     if (ballsLaunched == 0) {
-                        hood.set(MathFunctions.clamp(hoodAngle, 40, 204));
+                        hood.set(MathFunctions.clamp(hoodAngle, 40, 211.5));
                     } else if (ballsLaunched == 1) {
-                        hood.set(MathFunctions.clamp(hoodAngle - 10, 40, 204));
+                        hood.set(MathFunctions.clamp(hoodAngle - 10, 40, 211.5));
                     } else {
-                        hood.set(MathFunctions.clamp(hoodAngle-20, 40, 204));
+                        hood.set(MathFunctions.clamp(hoodAngle-20, 40, 211.5));
                     }
                 } else {
-                    hood.set(MathFunctions.clamp(hoodAngle, 40, 204));
+                    hood.set(MathFunctions.clamp(hoodAngle, 40, 211.5));
                 }
 
                 if (launchPIDF.atSetPoint() && !robotLocation.equals("No Zone")) {
@@ -289,7 +289,7 @@ public class Blue extends OpMode {
 
         if (!turretZeroed) {
             turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
-            if (turretPIDF.getPositionError() > 500) {
+            if (Math.abs(turretPIDF.getPositionError()) > 500) {
                 turretPIDF.setP(globals.turret.pFar);
             } else {
                 turretPIDF.setP(globals.turret.pClose);
@@ -361,8 +361,8 @@ public class Blue extends OpMode {
                 }
                 robotLocation = "Close Zone";
             } else if (robotZone.isInside(farLaunchZone)) {
-                targetRPM = (13.09 * dist + 2164.9) * 1.025;
-                hoodAngle = 204;
+                targetRPM = (13.09 * dist + 2164.9) * 1.027;
+                hoodAngle = 211.5;
                 robotLocation = "Far Zone";
             } else {
                 targetRPM = 3000;
@@ -384,7 +384,7 @@ public class Blue extends OpMode {
 
 
             if (autoAim) {
-                if (turretPIDF.getPositionError() > 500) {
+                if (Math.abs(turretPIDF.getPositionError()) > 500) {
                     turretPIDF.setP(globals.turret.pFar);
                 } else {
                     turretPIDF.setP(globals.turret.pClose);

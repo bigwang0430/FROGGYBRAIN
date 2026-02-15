@@ -18,7 +18,7 @@ import org.firstinspires.ftc.teamcode.vars.globals;
 
 @TeleOp(name = "turretttestt")
 public class turretTest extends OpMode {
-    private PIDController turretPIDF = new PIDController(globals.turret.p, globals.turret.i, globals.turret.d);
+    private PIDController turretPIDF = new PIDController(globals.turret.pFar, globals.turret.i, globals.turret.d);
     private CRServoEx t1, t2;
     private AnalogInput turretEncoder;
     private Motor intake;
@@ -39,7 +39,7 @@ public class turretTest extends OpMode {
 
     @Override
     public void loop() {
-        turretPIDF.setPID(globals.turret.p, globals.turret.i, globals.turret.d);
+        turretPIDF.setPID(globals.turret.pFar, globals.turret.i, globals.turret.d);
         turretPIDF.setSetPoint(globals.turret.turretTarget);
         double turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
 
