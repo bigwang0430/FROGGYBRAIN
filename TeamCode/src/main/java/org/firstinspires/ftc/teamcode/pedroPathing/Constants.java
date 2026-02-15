@@ -23,7 +23,11 @@ public class Constants {
 
             .useSecondaryTranslationalPIDF(true)
             .useSecondaryHeadingPIDF(true)
-            .useSecondaryDrivePIDF(false)
+            .useSecondaryDrivePIDF(true)
+
+            .drivePIDFCoefficients(new FilteredPIDFCoefficients(0.004,0.0,0.0007,0.1,0.08))
+            .secondaryDrivePIDFCoefficients(new FilteredPIDFCoefficients(0.006, 0.0, 0.00001, 0.1, 0.08))
+
             ;
 
     public static MecanumConstants driveConstants = new MecanumConstants()
@@ -51,7 +55,7 @@ public class Constants {
             .strafeEncoderDirection(GoBildaPinpointDriver.EncoderDirection.FORWARD);
 
 
-    public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 1, 1);
+    public static PathConstraints pathConstraints = new PathConstraints(0.99, 100, 0.6, 1);
 
     public static Follower createFollower(HardwareMap hardwareMap) {
         return new FollowerBuilder(followerConstants, hardwareMap)

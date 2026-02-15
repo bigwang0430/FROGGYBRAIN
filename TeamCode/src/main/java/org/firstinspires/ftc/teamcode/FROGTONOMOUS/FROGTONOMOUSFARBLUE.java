@@ -7,6 +7,7 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.math.MathFunctions;
 import com.pedropathing.math.Vector;
 import com.pedropathing.paths.PathChain;
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
@@ -25,6 +26,8 @@ import com.seattlesolvers.solverslib.hardware.motors.MotorEx;
 import com.seattlesolvers.solverslib.hardware.servos.ServoEx;
 import com.seattlesolvers.solverslib.pedroCommand.FollowPathCommand;
 import com.seattlesolvers.solverslib.util.TelemetryData;
+import com.skeletonarmy.marrow.zones.Point;
+import com.skeletonarmy.marrow.zones.PolygonZone;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.teamcode.vars.globals;
@@ -143,6 +146,8 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
         private int ballsLaunched = 0;
         private MotorEx l1, l2, intake, transfer;
         private PIDController launchPIDF = new PIDController(globals.launcher.p, globals.launcher.i, globals.launcher.d);
+        private final PolygonZone farLaunchZone = new PolygonZone(new Point(48, 0), new Point(72, 24), new Point(96, 0));
+        private final PolygonZone robotZone = new PolygonZone(16, 17);
 
         private boolean dip1 = false, dip2 = false;
         public everythingsubsys(HardwareMap hardwareMap){
@@ -188,6 +193,8 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
             double y = follower.getPose().getY();
             Pose robot = new Pose(x, y);
             Pose goal = new Pose(globals.turret.goalX, globals.turret.goalY);
+            robotZone.setPosition(x, y);
+            robotZone.setRotation(follower.getPose().getHeading());
 
             Pose target = goal.minus(robot);
             Vector robotToGoal = target.getAsVector();
@@ -236,13 +243,13 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
                 l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
             }
 
-            if (launchPIDF.atSetPoint()) {
+            if (launchPIDF.atSetPoint() && robotZone.isInside(farLaunchZone)) {
                 gate.set(globals.gate.open);
                 intake.set(0.65);
                 transfer.set(0.65);
             }
 
-            boolean RPMdip = previousRPM - RPM > 300;
+            boolean RPMdip = previousRPM - RPM > 200;
             if (RPMdip && !dip1) {
                 ballsLaunched++;
                 dip1 = true;
@@ -253,20 +260,21 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
             }
         }
 
-            public void launchend(){
-                l1.set(0.2);
-                l2.set(0.2);
-                intake.set(0);
+        public void launchend(){
+            l1.set(0.2);
+            l2.set(0.2);
+            intake.set(0);
+            transfer.set(0);
                 dip1 = false;
                 dip2 = false;
                 ballsLaunched = 0;
-            }
-            public boolean launched(){
+        }
+        public boolean launched(){
                 if (ballsLaunched >= 2){
                     return true;
                 }
                 return false;
-            }
+        }
 
         @Override
         public void periodic(){
@@ -374,6 +382,11 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
         }
 
         @Override
+        public boolean isFinished(){
+            return everythingsubsystem.launched();
+        }
+
+        @Override
         public void end(boolean interrupted){
             everythingsubsystem.launchend();
         }
@@ -420,11 +433,11 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
 
     @Override
     public void initialize() {
-        //visionsubsys visionsubsystem = new visionsubsys(hardwareMap);
+        visionsubsys visionsubsystem = new visionsubsys(hardwareMap);
         everythingsubsys everythingsubsystem = new everythingsubsys(hardwareMap);
-//        timer.startTime();
-//        GoBildaPinpointDriver pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
-//        pinpoint.resetPosAndIMU();
+        GoBildaPinpointDriver pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+        pinpoint.resetPosAndIMU();
+        sleep(1000);
 
 
         follower = Constants.createFollower(hardwareMap);
@@ -435,35 +448,35 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
         register(everythingsubsystem);
 
         SequentialCommandGroup froggyroute = new SequentialCommandGroup(
+                new froggylaunch(everythingsubsystem),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(5000),
-                        new froggylaunch(everythingsubsystem)
+                        new SequentialCommandGroup(
+                                new FollowPathCommand(follower, Path1),
+                                new WaitCommand(500)
+                        ),
+                        new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(4000),
-                        new froggyeat(everythingsubsystem),
-                        new FollowPathCommand(follower, Path1)
-                ),
-                new FollowPathCommand(follower, Path2),
-                new ParallelDeadlineGroup(
-                        new WaitCommand(4000),
-                        new froggylaunch(everythingsubsystem)
+                        new froggylaunch(everythingsubsystem),
+                        new FollowPathCommand(follower, Path2)
                 ),
                 new FollowPathCommand(follower, Path3),
-                new WaitCommand(2000),
-                new FollowPathCommand(follower, Path4),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(4000),
-                        new froggylaunch(everythingsubsystem)
+                        new FollowPathCommand(follower, Path4),
+                        new froggyeat(everythingsubsystem)
+                ),
+                new ParallelDeadlineGroup(
+                        new froggylaunch(everythingsubsystem),
+                        new FollowPathCommand(follower, Path2)
                 ),
                 new FollowPathCommand(follower, Path5),
-                new WaitCommand(2000),
-                new FollowPathCommand(follower, Path6),
-                new WaitCommand(2000),
-                new FollowPathCommand(follower, Path7),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(4000),
-                        new froggylaunch(everythingsubsystem)
+                        new FollowPathCommand(follower, Path6),
+                        new froggyeat(everythingsubsystem)
+                ),
+                new ParallelDeadlineGroup(
+                        new froggylaunch(everythingsubsystem),
+                        new FollowPathCommand(follower, Path2)
                 ),
                 new FollowPathCommand(follower, Path8)
         );

@@ -46,9 +46,13 @@ public class globals {
         public static float goalY = 140;
         public static float goalX = 4;
 
-        public static float p = 0F;
+        public static float p = 0.000056F;
         public static float i = 0F;
-        public static float d = 0F;
+        public static float d = 0.000001F;
+        public static float ks = 0.08F;
+
+        public static float pZero = 0.0000005F;
+
 
         public static float turretTarget = 0F;
 
@@ -60,4 +64,7 @@ public class globals {
         public static double xoff = 85;
         public static double yoff = -131.25;
     }
+    public static double pHg = 1.0;
+    public static double qH = 0.003;
+    public static double rH = 0.02;
 }

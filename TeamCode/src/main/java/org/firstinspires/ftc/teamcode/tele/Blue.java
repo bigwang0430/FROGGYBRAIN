@@ -14,10 +14,13 @@ import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.controller.PIDController;
+import com.seattlesolvers.solverslib.controller.SquIDFController;
 import com.seattlesolvers.solverslib.gamepad.GamepadEx;
 import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
+import com.seattlesolvers.solverslib.hardware.motors.CRServoEx;
 import com.seattlesolvers.solverslib.hardware.motors.Motor;
 import com.seattlesolvers.solverslib.hardware.servos.ServoEx;
 import com.skeletonarmy.marrow.zones.Point;
@@ -29,6 +32,7 @@ import org.firstinspires.ftc.teamcode.vars.globals;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.vars.states;
 
+import java.sql.SQLData;
 import java.util.Objects;
 
 @TeleOp(name = "Blue")
@@ -38,8 +42,11 @@ public class Blue extends OpMode {
     private final PolygonZone robotZone = new PolygonZone(18, 18);
     
     private Motor l1, l2, intake, transfer;
-    private ServoEx hood, turret, gate, tiltl, tiltr;
-    
+    private ServoEx hood, gate, tiltl, tiltr;
+    private CRServoEx t1, t2;
+    private PIDController turretPIDF = new PIDController(globals.turret.p, globals.turret.i, globals.turret.d);
+    private PIDController turretZeroPIDF= new PIDController(globals.turret.pZero, 0, 0);
+    private AnalogInput turretEncoder;
     private GamepadEx g1, g2;
     private Follower follower;
     private PIDController launchPIDF = new PIDController(globals.launcher.p, globals.launcher.i, globals.launcher.d);
@@ -57,12 +64,13 @@ public class Blue extends OpMode {
     private String robotLocation = "No Zone";
     
     
-    private double lastTime, launchPower, RPM, previousRPM, dist, turretAng, targetRPM, hoodAngle, leftY, leftX;
-    private double turretPos = 180F;
+    private double lastTime, launchPower, RPM, previousRPM, dist, turretAng, targetRPM, hoodAngle, leftY, leftX, turretPower;
+    private double turretPos = 0F;
     private int lastPosition;
     private boolean prevCross1, prevOptions2;
     private boolean autoAim = true, dip1 = false, dip2 = true;
     private boolean slowDrive = false;
+    private boolean turretZeroed = false;
     private int ballsLaunched = 0;
 
     private static final FieldManager panelsField = PanelsField.INSTANCE.getField();
@@ -73,21 +81,28 @@ public class Blue extends OpMode {
     private Limelight3A limelight;
 
     private double xEst = 0, yEst = 0, hEst = 0;   // odometry estimate
-    private double pX = globals.kalman.pX0, pY = globals.kalman.pY0, pH = 1; // odometry error
+    private double pX = globals.kalman.pX0, pY = globals.kalman.pY0, pH = globals.pHg; // odometry error
 
     private static final double M_TO_IN = 39.37007874015748;
 
     private Pose fusedPose = new Pose(0, 0, 0);
     private Pose odoPose = new Pose(0, 0, 0);
-
+    private double zH=0.0;
     @Override
     public void init() {
         timer.startTime();
         GoBildaPinpointDriver pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
         pinpoint.resetPosAndIMU();
 
-        turret = new ServoEx(hardwareMap, "t2", 360, AngleUnit.DEGREES);
-        turret.setInverted(true);
+        t1 = new CRServoEx(hardwareMap, "t1");
+        t2 = new CRServoEx(hardwareMap, "t2");
+        t2.setInverted(true);
+        t1.setInverted(true);
+        turretEncoder = hardwareMap.get(AnalogInput.class, "turretEncoder");
+
+        turretPIDF.setTolerance(67);
+        t1.set(0.001);
+        t2.set(0.001);
         l1 = new Motor(hardwareMap, "l1", 28, 6000);
         l2 = new Motor(hardwareMap, "l2", 28, 6000);
         l1.setRunMode(Motor.RunMode.RawPower);
@@ -99,7 +114,12 @@ public class Blue extends OpMode {
 
         gate = new ServoEx(hardwareMap, "gate");
         gate.set(globals.gate.close);
+
         intake = new Motor(hardwareMap, "intake");
+        intake.stopAndResetEncoder();
+        intake.resetEncoder();
+
+
         transfer = new Motor(hardwareMap, "transfer");
         intake.setRunMode(Motor.RunMode.RawPower);
         transfer.setRunMode(Motor.RunMode.RawPower);
@@ -124,6 +144,9 @@ public class Blue extends OpMode {
             telemetry.update();
         }
 
+        timer.reset();
+        timer.startTime();
+
         limelight = hardwareMap.get(Limelight3A.class, "limelight");
         limelight.setPollRateHz(50);
         limelight.start();
@@ -138,16 +161,28 @@ public class Blue extends OpMode {
             fusedPose = new Pose(xEst, yEst, hEst);
             odoPose = p;
         }
+
+
+        double distance = 1.6 - turretEncoder.getVoltage();
+        double target = degresToTicks(voltageToDegrees(distance)) * 2;
+        turretPIDF.setSetPoint(-target);
+
+        telemetry.addData("ter", target);
+        telemetry.addData("didd", distance);
+
     }
 
     @Override
     public void loop() {
+
+
         follower.update();
         RPM();
         launchCalc();
         drive();
         launch();
         drawRobot(follower.getPose(), robotLook);
+        updateKalman();
 
 
         telemetry();
@@ -156,8 +191,8 @@ public class Blue extends OpMode {
     private void telemetry() {
         telemetry.addData("autoaim", autoAim);
         telemetry.addData("robotLocation", robotLocation);
-        telemetry.addData("loop time", timer.seconds());
-        timer.reset();
+
+
         TelemetryPacket rpmPacket = new TelemetryPacket();
         rpmPacket.put("RPM", RPM);
 
@@ -166,10 +201,18 @@ public class Blue extends OpMode {
 
         FtcDashboard.getInstance().sendTelemetryPacket(powerPacket);
         FtcDashboard.getInstance().sendTelemetryPacket(rpmPacket);
+
+        telemetry.addData("terrr", turretZeroed);
+        telemetry.addData("pos", intake.getCurrentPosition());
+        telemetry.addData("tare", turretEncoder.getVoltage());
+        telemetry.addData("turretAng", turretAng);
+
         telemetry.update();
     }
 
     private void launch() {
+
+
         launchPIDF.setPID(globals.launcher.p, globals.launcher.i, globals.launcher.d);
         if (g2.getButton(GamepadKeys.Button.CROSS)) {
             currentLaunchState = launchState.launching;
@@ -193,18 +236,18 @@ public class Blue extends OpMode {
                 break;
 
             case launching:
-                hood.set(MathFunctions.clamp(hoodAngle, 40, 240));
+
                 launchPIDF.setSetPoint(targetRPM);
                 launchPower = launchPIDF.calculate(RPM);
-                if (RPM < 600) {
-                    l1.set(0.4);
-                    l2.set(0.4);
+                if (RPM < 400) {
+                    l1.set(0.35);
+                    l2.set(0.35);
                 } else {
                     l1.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
                     l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
                 }
 
-                boolean RPMdip = previousRPM - RPM > 300;
+                boolean RPMdip = previousRPM - RPM > 150;
                 if (RPMdip && !dip1) {
                     ballsLaunched++;
                     dip1 = true;
@@ -214,11 +257,14 @@ public class Blue extends OpMode {
                     dip2 = true;
                 }
 
-
-                if (ballsLaunched == 0) {
-                    hood.set(MathFunctions.clamp(hoodAngle, 40, 240));
-                } else if (ballsLaunched == 1) {
-                    hood.set(MathFunctions.clamp(hoodAngle - globals.launcher.airSortThreshold, 40, 240));
+                if (robotZone.equals(farLaunchZone)) {
+                    if (ballsLaunched == 0) {
+                        hood.set(MathFunctions.clamp(hoodAngle, 40, 204));
+                    } else if (ballsLaunched == 1) {
+                        hood.set(MathFunctions.clamp(hoodAngle - 10, 40, 204));
+                    } else {
+                        hood.set(MathFunctions.clamp(hoodAngle-20, 40, 204));
+                    }
                 } else {
                     hood.set(MathFunctions.clamp(hoodAngle, 40, 240));
                 }
@@ -243,79 +289,132 @@ public class Blue extends OpMode {
     }
 
     private void launchCalc() {
-        double x = follower.getPose().getX();
-        double y = follower.getPose().getY();
-        Pose robot = new Pose(x, y);
-        robotZone.setPosition(x, y);
-        robotZone.setRotation(follower.getPose().getHeading());
-        Pose goal = new Pose(globals.turret.goalX, globals.turret.goalY);
-        if (follower.getVelocity().getMagnitude() < 6 || "Far Zone".equals(robotLocation)) {
-            currentLaunchMode = launchMode.normal;
-        } else {
-            currentLaunchMode = launchMode.SOTM;
-        }
 
-        switch (currentLaunchMode) {
-            case SOTM:
-                dist = goal.minus(robot).getAsVector().getMagnitude();
+        if (!turretZeroed) {
+            turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
 
-                double accelMag = Math.floor(follower.getAcceleration().getMagnitude());
-                double accelAngle = Math.toRadians(Math.floor(Math.toDegrees(follower.getAcceleration().getTheta())));
-                Vector accel = new Vector(accelMag, accelAngle); // calculate acceleration rounded to nearest inch/s, nearest degree (in inch/s^2, rad)
 
-                Vector velocity = follower.getVelocity().plus(new Vector(accel.getMagnitude() * globals.launcher.velTime, accel.getTheta())); // create a velocity vector by using v = u + at
-
-                double distanceDiff = velocity.getMagnitude() * (0.0025 * dist + 0.3871);
-                Vector robotVelocity = new Vector (distanceDiff, velocity.getTheta());
-                Pose newGoal = new Pose(-robotVelocity.getXComponent() + goal.getX(), -robotVelocity.getYComponent() + goal.getY());
-
-                double newGoalAngle = Math.atan2(newGoal.getY() - y, newGoal.getX()-x);
-                turretAng = Math.toDegrees(AngleUnit.normalizeRadians(follower.getHeading() - newGoalAngle));
-                dist = newGoal.minus(robot).getAsVector().getMagnitude();
-                break;
-            case normal:
-
-                Pose target = goal.minus(robot);
-                Vector robotToGoal = target.getAsVector();
-                double goalAngle = Math.atan2(goal.getY() - y, goal.getX()-x);
-
-                turretAng = Math.toDegrees(AngleUnit.normalizeRadians(follower.getHeading() - goalAngle));
-                dist = robotToGoal.getMagnitude();
-
-                break;
-        }
-
-        if (robotZone.isInside(closeLaunchZone)) {
-            targetRPM = 2414.2 * Math.exp(0.0036 * dist);
-            if (dist < 35) {
-                hoodAngle = 40;
+            if (turretPIDF.atSetPoint()) {
+                intake.stopAndResetEncoder();
+                intake.resetEncoder();
+                intake.setRunMode(Motor.RunMode.RawPower);
+                t1.set(0);
+                t2.set(0);
+                turretZeroed = true;
             } else {
-                hoodAngle = 147.8 * Math.log(dist) - 441.52;
+
+                t1.set(setTurret(turretPower));
+                t2.set(setTurret(turretPower));
             }
-            robotLocation = "Close Zone";
-        } else if (robotZone.isInside(farLaunchZone)) {
-            targetRPM = 13.09 * dist + 2164.9;
-            hoodAngle = 240;
-            robotLocation = "Far Zone";
-        } else {
-            targetRPM = 3000;
-            robotLocation = "No Zone";
-        }
 
-        if (Math.abs(turretAng) > 130) {
-            turretAng = 0;
-        }
 
-        if (g2.getButton(GamepadKeys.Button.OPTIONS) && !prevOptions2) {
-            autoAim = !autoAim;
-        } prevOptions2 = g2.getButton(GamepadKeys.Button.OPTIONS);
-        if (autoAim) {
-            turret.set(setTurret(turretAng));
-            turretPos = setTurret(turretAng);
         } else {
-            turretPos -= 1.5 * (g2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) - g2.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER));
-            turret.set(MathFunctions.clamp(turretPos, 50, 310));
+            double x = follower.getPose().getX();
+            double y = follower.getPose().getY();
+            Pose robot = new Pose(x, y);
+            robotZone.setPosition(x, y);
+            robotZone.setRotation(follower.getPose().getHeading());
+            Pose goal = new Pose(globals.turret.goalX, globals.turret.goalY);
+            if (follower.getVelocity().getMagnitude() < 6 ) {
+                currentLaunchMode = launchMode.normal;
+            } else {
+                currentLaunchMode = launchMode.SOTM;
+            }
+
+            switch (currentLaunchMode) {
+                case SOTM:
+                    dist = goal.minus(robot).getAsVector().getMagnitude();
+
+                    double accelMag = Math.floor(follower.getAcceleration().getMagnitude());
+                    double accelAngle = Math.toRadians(Math.floor(Math.toDegrees(follower.getAcceleration().getTheta())));
+                    Vector accel = new Vector(accelMag, accelAngle); // calculate acceleration rounded to nearest inch/s, nearest degree (in inch/s^2, rad)
+
+                    Vector velocity = follower.getVelocity().plus(new Vector(accel.getMagnitude() * globals.launcher.velTime, accel.getTheta())); // create a velocity vector by using v = u + at
+
+                    double distanceDiff = velocity.getMagnitude() * (0.0025 * dist + 0.3871);
+                    Vector robotVelocity = new Vector(distanceDiff, velocity.getTheta());
+                    Pose newGoal = new Pose(-robotVelocity.getXComponent() + goal.getX(), -robotVelocity.getYComponent() + goal.getY());
+
+                    double newGoalAngle = Math.atan2(newGoal.getY() - y, newGoal.getX() - x);
+                    turretAng = Math.toDegrees(AngleUnit.normalizeRadians(follower.getHeading() - newGoalAngle));
+                    dist = newGoal.minus(robot).getAsVector().getMagnitude();
+                    break;
+                case normal:
+
+                    Pose target = goal.minus(robot);
+                    Vector robotToGoal = target.getAsVector();
+                    double goalAngle = Math.atan2(goal.getY() - y, goal.getX() - x);
+
+                    turretAng = Math.toDegrees(AngleUnit.normalizeRadians(follower.getHeading() - goalAngle));
+                    dist = robotToGoal.getMagnitude();
+
+                    break;
+            }
+
+            if (robotZone.isInside(closeLaunchZone)) {
+                targetRPM = 2414.2 * Math.exp(0.0036 * dist);
+                if (dist < 35) {
+                    hoodAngle = 40;
+                } else {
+                    hoodAngle = 147.8 * Math.log(dist) - 441.52;
+                }
+                robotLocation = "Close Zone";
+            } else if (robotZone.isInside(farLaunchZone)) {
+                targetRPM = (13.09 * dist + 2164.9) * 1.025;
+                hoodAngle = 204;
+                robotLocation = "Far Zone";
+            } else {
+                targetRPM = 3000;
+                robotLocation = "No Zone";
+            }
+
+            if (Math.abs(turretAng) > 120) {
+                turretAng = 0;
+            }
+
+            double turretTarget = degresToTicks((turretAng * 3));
+            turretPIDF.setSetPoint(turretTarget);
+            telemetry.addData("ftrer", turretTarget);
+
+            if (g2.getButton(GamepadKeys.Button.OPTIONS) && !prevOptions2) {
+                autoAim = !autoAim;
+            }
+            prevOptions2 = g2.getButton(GamepadKeys.Button.OPTIONS);
+
+
+            if (autoAim) {
+
+                turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
+                if (!turretPIDF.atSetPoint()) {
+                    t1.set(setTurret(turretPower));
+                    t2.set(setTurret(turretPower));
+                } else {
+                    t1.set(0);
+                    t2.set(0);
+                }
+                turretPos = intake.getCurrentPosition();
+            } else {
+                turretPos -=  50* (g2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) - g2.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER));
+                turretPIDF.setSetPoint(MathFunctions.clamp(turretPos, -8000, 8000));
+                turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
+                t1.set(setTurret(turretPower));
+                t2.set(setTurret(turretPower));
+
+
+            }
+
+
         }
+    }
+    private double setTurret(double power) {
+        return Math.signum(power) * (Math.abs(power) + globals.turret.ks);
+    }
+    private double degresToTicks(double degree) {
+        return (degree * 8192) / 360;
+    }
+
+    private double voltageToDegrees(double volts) {
+        return ((volts) * 360) / 3.2 ;
     }
 
     private void drive() {
@@ -364,10 +463,6 @@ public class Blue extends OpMode {
         }
     }
 
-    private double setTurret(double ang) {
-        ang = 180 - ((ang * 3) / 2) - globals.turret.turretOffset;
-        return ang;
-    }
 
 
     public void drawRobot(Pose pose, Style style) {
@@ -403,7 +498,8 @@ public class Blue extends OpMode {
         double xPred = odo.getX(), yPred = odo.getY(), hPred = odo.getHeading();
         double pXPred = pX + globals.kalman.qX;
         double pYPred = pY + globals.kalman.qY;
-        double pHPred = pH;
+        double pHPred = pH + globals.qH;
+
 
 
         // no measurement = keep position
@@ -416,6 +512,20 @@ public class Blue extends OpMode {
             if (bot != null) {
                 double zX = 72 + (bot.getPosition().y * M_TO_IN);
                 double zY = 72 - (bot.getPosition().x * M_TO_IN);
+                zH = bot.getOrientation().getYaw(AngleUnit.RADIANS);
+                zH-=Math.PI;
+                zH += Math.PI / 2.0 ;
+                zH = zH % (2.0 * Math.PI);
+                if (zH < 0) zH += 2.0 * Math.PI;
+                double headingError = zH - hPred;
+                while (headingError > Math.PI) headingError -= 2.0 * Math.PI;
+                while (headingError < -Math.PI) headingError += 2.0 * Math.PI;
+                double kH = pHPred / (pHPred + globals.rH);
+                hEst = hPred + kH * headingError;
+                while (hEst > Math.PI) hEst -= 2.0 * Math.PI;
+                while (hEst < -Math.PI) hEst += 2.0 * Math.PI;
+                pH = (1.0 - kH) * pHPred;
+
 
 
                 double kX = pXPred / (pXPred + globals.kalman.rX);
@@ -429,11 +539,11 @@ public class Blue extends OpMode {
             }
         }
 
-        fusedPose = new Pose(xEst, yEst, hEst);
-
-        if (g2.getButton(GamepadKeys.Button.RIGHT_BUMPER) && (Math.abs(fusedPose.getX() - follower.getPose().getX()) < 5) &&  (Math.abs(fusedPose.getY() - follower.getPose().getY()) < 5)) {
+    fusedPose = new Pose(xEst, yEst, hEst);
+        if (g2.getButton(GamepadKeys.Button.RIGHT_BUMPER)) {
             follower.setPose(fusedPose);
         }
+
     }
 
 }
