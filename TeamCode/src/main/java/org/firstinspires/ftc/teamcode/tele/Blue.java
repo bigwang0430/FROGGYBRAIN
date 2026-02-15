@@ -44,8 +44,7 @@ public class Blue extends OpMode {
     private Motor l1, l2, intake, transfer;
     private ServoEx hood, gate, tiltl, tiltr;
     private CRServoEx t1, t2;
-    private PIDController turretPIDF = new PIDController(globals.turret.p, globals.turret.i, globals.turret.d);
-    private PIDController turretZeroPIDF= new PIDController(globals.turret.pZero, 0, 0);
+    private PIDController turretPIDF = new PIDController(globals.turret.pFar, globals.turret.i, globals.turret.d);
     private AnalogInput turretEncoder;
     private GamepadEx g1, g2;
     private Follower follower;
@@ -100,7 +99,7 @@ public class Blue extends OpMode {
         t1.setInverted(true);
         turretEncoder = hardwareMap.get(AnalogInput.class, "turretEncoder");
 
-        turretPIDF.setTolerance(67);
+        turretPIDF.setTolerance(30);
         t1.set(0.001);
         t2.set(0.001);
         l1 = new Motor(hardwareMap, "l1", 28, 6000);
@@ -167,8 +166,6 @@ public class Blue extends OpMode {
         double target = degresToTicks(voltageToDegrees(distance)) * 2;
         turretPIDF.setSetPoint(-target);
 
-        telemetry.addData("ter", target);
-        telemetry.addData("didd", distance);
 
     }
 
@@ -247,7 +244,7 @@ public class Blue extends OpMode {
                     l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
                 }
 
-                boolean RPMdip = previousRPM - RPM > 150;
+                boolean RPMdip = previousRPM - RPM > 100;
                 if (RPMdip && !dip1) {
                     ballsLaunched++;
                     dip1 = true;
@@ -266,7 +263,7 @@ public class Blue extends OpMode {
                         hood.set(MathFunctions.clamp(hoodAngle-20, 40, 204));
                     }
                 } else {
-                    hood.set(MathFunctions.clamp(hoodAngle, 40, 240));
+                    hood.set(MathFunctions.clamp(hoodAngle, 40, 204));
                 }
 
                 if (launchPIDF.atSetPoint() && !robotLocation.equals("No Zone")) {
@@ -292,12 +289,16 @@ public class Blue extends OpMode {
 
         if (!turretZeroed) {
             turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
-
+            if (turretPIDF.getPositionError() > 500) {
+                turretPIDF.setP(globals.turret.pFar);
+            } else {
+                turretPIDF.setP(globals.turret.pClose);
+            }
 
             if (turretPIDF.atSetPoint()) {
                 intake.stopAndResetEncoder();
                 intake.resetEncoder();
-                intake.setRunMode(Motor.RunMode.RawPower);
+
                 t1.set(0);
                 t2.set(0);
                 turretZeroed = true;
@@ -383,7 +384,11 @@ public class Blue extends OpMode {
 
 
             if (autoAim) {
-
+                if (turretPIDF.getPositionError() > 500) {
+                    turretPIDF.setP(globals.turret.pFar);
+                } else {
+                    turretPIDF.setP(globals.turret.pClose);
+                }
                 turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
                 if (!turretPIDF.atSetPoint()) {
                     t1.set(setTurret(turretPower));
@@ -394,7 +399,7 @@ public class Blue extends OpMode {
                 }
                 turretPos = intake.getCurrentPosition();
             } else {
-                turretPos -=  50* (g2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) - g2.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER));
+                turretPos -=  200* (g2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) - g2.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER));
                 turretPIDF.setSetPoint(MathFunctions.clamp(turretPos, -8000, 8000));
                 turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
                 t1.set(setTurret(turretPower));
