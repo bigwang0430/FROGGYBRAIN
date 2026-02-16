@@ -23,6 +23,7 @@ import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 import com.seattlesolvers.solverslib.command.WaitCommand;
 import com.seattlesolvers.solverslib.controller.PIDController;
+import com.seattlesolvers.solverslib.gamepad.GamepadKeys;
 import com.seattlesolvers.solverslib.hardware.motors.CRServo;
 import com.seattlesolvers.solverslib.hardware.motors.CRServoEx;
 import com.seattlesolvers.solverslib.hardware.motors.Motor;
@@ -35,40 +36,47 @@ import com.skeletonarmy.marrow.zones.PolygonZone;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+import org.firstinspires.ftc.teamcode.tele.Blue;
 import org.firstinspires.ftc.teamcode.vars.globals;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 
 import java.util.List;
 
 @Autonomous
-public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
+public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
     private Follower follower;
     TelemetryData telemetryData = new TelemetryData(telemetry);
     private ElapsedTime timer = new ElapsedTime();
     private boolean scheduled = false;
     private SequentialCommandGroup froggyroute;
-    public PathChain Path1, Path2, Path3, Path4, Path5, Path6, Path7, Path8, Path9, Path10;
+    private int shootnum = 0;
+    public PathChain Path1, Path2, Path3, Path4, Path5, Path6, Path7, Path8, Path9, Path10, Path11, Path12, Path13, Path14, Path15;
+    private enum launchMode {
+        SOTM,
+        normal
+    } private launchMode currentLaunchMode = launchMode.normal;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //PATHS/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-    public void buildpath() {
+
+    public void buildpath(){
         Path1 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(40.000, 9.00),
+                                new Pose(21.800, 124.900),
 
-                                new Pose(9.000, 9.00)
+                                new Pose(47.063, 83.590)
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setLinearHeadingInterpolation(Math.toRadians(144), Math.toRadians(180))
 
                 .build();
 
         Path2 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(9.000, 9.00),
+                                new Pose(47.063, 83.590),
 
-                                new Pose(44.000, 9.00)
+                                new Pose(42.000, 60.000)
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -76,69 +84,69 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
 
         Path3 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(44.000, 9.00),
+                                new Pose(42.000, 60.000),
 
-                                new Pose(9.000, 9.00)
+                                new Pose(23.000, 60.000)
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
+
                 .build();
 
         Path4 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(9.000, 9.00),
+                                new Pose(23.000, 60.000),
 
-                                new Pose(44.000, 9.00)
+                                new Pose(52.000, 78.000)
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
-                .build();
 
+                .build();
 
         Path5 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(44.000, 9.00),
+                                new Pose(52.000, 78.000),
 
-                                new Pose(42.500, 35.500)
+                                new Pose(12.448, 59.776)
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(147))
 
                 .build();
 
         Path6 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(42.500, 35.500),
+                                new Pose(12.448, 59.776),
 
-                                new Pose(9.000, 35.500)
+                                new Pose(54.000, 81.000)
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setLinearHeadingInterpolation(Math.toRadians(147), Math.toRadians(132))
 
                 .build();
 
         Path7 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(9.000, 35.500),
+                                new Pose(54.000, 81.000),
 
-                                new Pose(44.000, 9.000)
+                                new Pose(12.448, 59.776)
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setLinearHeadingInterpolation(Math.toRadians(132), Math.toRadians(147))
 
                 .build();
 
-
         Path8 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(44.000, 9.000),
+                                new Pose(12.448, 59.776),
 
-                                new Pose(9.000, 30.000)
+                                new Pose(54.000, 81.000)
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setLinearHeadingInterpolation(Math.toRadians(147), Math.toRadians(180))
 
                 .build();
 
         Path9 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(9.000, 30.000),
+                                new Pose(54.000, 81.000),
 
-                                new Pose(44.000, 9.000)
+                                new Pose(42.500, 84.000)
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -146,13 +154,64 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
 
         Path10 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(44.000, 9.000),
+                                new Pose(42.500, 84.000),
 
-                                new Pose(30.000, 9.000)
+                                new Pose(25.000, 84.000)
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
                 .build();
+
+        Path11 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(17.000, 84.000),
+
+                                new Pose(45.000, 84.000)
+                        )
+                ).setConstantHeadingInterpolation(Math.toRadians(180))
+
+                .build();
+
+        Path12 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(45.000, 84.000),
+
+                                new Pose(42.500, 35.500)
+                        )
+                ).setConstantHeadingInterpolation(Math.toRadians(180))
+
+                .build();
+
+        Path13 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(42.500, 35.500),
+
+                                new Pose(23.000, 35.500)
+                        )
+                ).setConstantHeadingInterpolation(Math.toRadians(180))
+
+                .build();
+
+        Path14 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(23.000, 35.500),
+
+                                new Pose(53.000, 80.000)
+                        )
+                ).setConstantHeadingInterpolation(Math.toRadians(180))
+
+                .build();
+
+        Path15 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(53.000, 80.000),
+
+                                new Pose(40.000, 80.000)
+                        )
+                ).setConstantHeadingInterpolation(Math.toRadians(180))
+
+                .build();
+
     }
 
     //SUBSYSTEMS///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -160,12 +219,12 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
     public class everythingsubsys extends SubsystemBase {
         private ServoEx hood, gate;
         private CRServo t1, t2;
-        private double dist, turretAng = 0, targetRPM, hoodAngle, RPM, lastTime, lastPosition, previousRPM, launchPower;
+        private double dist, turretAng = 0, targetRPM, hoodAngle, RPM, lastTime, lastPosition, previousRPM, launchPower, turretPower, turretPos;
         private PIDController turretPIDF = new PIDController(globals.turret.pFar, globals.turret.i, globals.turret.d);
         private int ballsLaunched = 0;
         private MotorEx l1, l2, intake, transfer;
         private PIDController launchPIDF = new PIDController(globals.launcher.p, globals.launcher.i, globals.launcher.d);
-        private final PolygonZone farLaunchZone = new PolygonZone(new Point(45, 0), new Point(72, 24), new Point(96, 0));
+        private final PolygonZone closeLaunchZone = new PolygonZone(new Point(144, 144), new Point(72, 72), new Point(0, 144));
         private final PolygonZone robotZone = new PolygonZone(18, 18);
         private boolean dip1 = false, dip2 = false;
         private AnalogInput turretEncoder;
@@ -205,7 +264,7 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
 
             hood = new ServoEx(hardwareMap, "hood", 300, AngleUnit.DEGREES);
 
-            launchPIDF.setTolerance(50);
+            launchPIDF.setTolerance(300);
             launchPIDF.setPID(globals.launcher.p, globals.launcher.i, globals.launcher.d);
 
             turretEncoder = hardwareMap.get(AnalogInput.class, "turretEncoder");
@@ -216,9 +275,21 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
 
         public void intaking(){
             intake.set(1);
-            transfer.set(0.2);
+            transfer.set(0.5);
             gate.set(globals.gate.close);
         }
+        public void intakedone(){
+            intake.set(0);
+            transfer.set(0);
+        }
+
+        private double degresToTicks(double degree) {
+            return (degree * 8192) / 360;
+        }
+        private double voltageToDegrees(double volts) {
+            return ((volts) * 360) / 3.2 ;
+        }
+
         public void launchcalc() {
             double x = follower.getPose().getX();
             double y = follower.getPose().getY();
@@ -227,15 +298,25 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
             robotZone.setPosition(x, y);
             robotZone.setRotation(follower.getPose().getHeading());
 
-            Pose target = goal.minus(robot);
-            Vector robotToGoal = target.getAsVector();
-            double goalAngle = Math.atan2(goal.getY() - y, goal.getX() - x);
 
-            turretAng = Math.toDegrees(AngleUnit.normalizeRadians(follower.getHeading() - goalAngle));
-            dist = robotToGoal.getMagnitude();
 
-            targetRPM = (13.09 * dist + 2164.9) * 1.005;
-            hoodAngle = 211.5;
+                    Pose target = goal.minus(robot);
+                    Vector robotToGoal = target.getAsVector();
+                    double goalAngle = Math.atan2(goal.getY() - y, goal.getX() - x);
+
+                    turretAng = Math.toDegrees(AngleUnit.normalizeRadians(follower.getHeading() - goalAngle));
+                    dist = robotToGoal.getMagnitude();
+
+            if (robotZone.isInside(closeLaunchZone)) {
+                targetRPM = 2414.2 * Math.exp(0.0036 * dist);
+                if (dist < 35) {
+                    hoodAngle = 40;
+                } else {
+                    hoodAngle = 147.8 * Math.log(dist) - 441.52;
+                }
+            } else {
+                targetRPM = 3000;
+            }
 
             if (Math.abs(turretAng) > 120) {
                 turretAng = 0;
@@ -243,33 +324,26 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
 
             double turretTarget = degresToTicks((turretAng * 3)) + turretZeroOffset;
             turretPIDF.setSetPoint(turretTarget);
-            if (Math.abs(turretPIDF.getPositionError()) > 1000) {
-                turretPIDF.setP(globals.turret.pFar);
-            } else {
-                turretPIDF.setP(globals.turret.pClose);
-            }
 
-            double turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
-            if (!turretPIDF.atSetPoint() && robotZone.isInside(farLaunchZone)) {
-                t1.set(setTurret(turretPower));
-                t2.set(setTurret(turretPower));
-            } else {
-                t1.set(0.001);
-                t2.set(0.001);
-            }
-        }
-        public void intakedone(){
-            intake.set(0);
+
+                if (Math.abs(turretPIDF.getPositionError()) > 1000) {
+                    turretPIDF.setP(globals.turret.pFar);
+                } else {
+                    turretPIDF.setP(globals.turret.pClose);
+                }
+                telemetry.addData("err", Math.abs(turretPIDF.getPositionError()));
+                turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
+                if (!turretPIDF.atSetPoint()) {
+                    t1.set(setTurret(turretPower));
+                    t2.set(setTurret(turretPower));
+                } else {
+                    t1.set(0);
+                    t2.set(0);
+                }
+
         }
         private double setTurret(double power) {
             return Math.signum(power) * (Math.abs(power) + globals.turret.ks);
-        }
-        private double degresToTicks(double degree) {
-            return (degree * 8192) / 360;
-        }
-
-        private double voltageToDegrees(double volts) {
-            return ((volts) * 360) / 3.2 ;
         }
         public void RPM() {
             double currentTime = getRuntime();
@@ -298,8 +372,12 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
                 l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
             }
 
-            if (launchPIDF.atSetPoint() && robotZone.isInside(farLaunchZone) && turretPIDF.atSetPoint()) {
-                boolean RPMdip = previousRPM - RPM > 80;
+            if (launchPIDF.atSetPoint() && robotZone.isInside(closeLaunchZone) && !follower.isBusy()) {
+                gate.set(globals.gate.open);
+                intake.set(1);
+                transfer.set(1);
+
+                boolean RPMdip = previousRPM - RPM > 100;
                 if (RPMdip && !dip1) {
                     ballsLaunched++;
                     dip1 = true;
@@ -308,19 +386,9 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
                     ballsLaunched++;
                     dip2 = true;
                 }
-
-                gate.set(globals.gate.open);
-                intake.set(0.57);
-                transfer.set(0.57);
             }
+            hood.set(MathFunctions.clamp(hoodAngle, 40, 211.5));
 
-            if (ballsLaunched == 0) {
-                hood.set(MathFunctions.clamp(hoodAngle, 40, 211.5));
-            } else if (ballsLaunched == 1) {
-                hood.set(MathFunctions.clamp(hoodAngle - 5, 40, 211.5));
-            } else {
-                hood.set(MathFunctions.clamp(hoodAngle- 12, 40, 211.5));
-            }
         }
         public void launchend(){
             l1.set(0.2);
@@ -330,12 +398,14 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
             dip1 = false;
             dip2 = false;
             ballsLaunched = 0;
+            shootnum++;
         }
         public boolean launched(){
             telemetryData.addData("ballslaucnhe", ballsLaunched);
             telemetryData.addData("dip1", dip1);
             telemetryData.addData("dip2", dip2);
-            telemetryData.addData("insidezone", robotZone.isInside(farLaunchZone));
+            telemetryData.addData("insidezone", robotZone.isInside(closeLaunchZone));
+            telemetryData.addData("l1 power", l1.get());
             telemetryData.update();
             return ballsLaunched >= 2;
         }
@@ -355,9 +425,7 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
         private int alignedticks = 0;
         private double xEst = 0, yEst = 0, hEst = 0;   // odometry estimate
         private double pX = globals.kalman.pX0, pY = globals.kalman.pY0, pH = globals.pHg; // odometry error
-
         private static final double M_TO_IN = 39.37007874015748;
-
         private Pose fusedPose = new Pose(0, 0, 0);
         private Pose odoPose = new Pose(0, 0, 0);
         private double zH=0.0;
@@ -394,7 +462,6 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
             limelight.pipelineSwitch(num);
         }
         public void relocalize() {
-            pipeline(0);
             Pose odo = follower.getPose();
             if (odo == null) return;
 
@@ -447,7 +514,8 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
 
             fusedPose = new Pose(xEst, yEst, hEst);
 
-
+            follower.setPose(fusedPose);
+            follower.update();
         }
 
         public void balltracking() {
@@ -511,11 +579,6 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
         }
 
         @Override
-        public boolean isFinished(){
-            return everythingsubsystem.launched();
-        }
-
-        @Override
         public void end(boolean interrupted){
             everythingsubsystem.launchend();
         }
@@ -562,6 +625,25 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
             return visionsubsystem.done();
         }
     }
+    public static class froggyaim extends CommandBase {
+        private final visionsubsys visionsubsystem;
+
+        public froggyaim(visionsubsys visionsubsystem){
+            this.visionsubsystem = visionsubsystem;
+            addRequirements(visionsubsystem);
+        }
+
+        @Override
+        public void initialize(){
+            visionsubsystem.pipeline(0);
+        }
+
+        @Override
+        public void execute() {
+            visionsubsystem.relocalize();
+        }
+    }
+
 
     //INIT///////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -578,7 +660,7 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
         }
 
         follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(new Pose(40, 9, Math.toRadians(180)));//todo
+        follower.setStartingPose(new Pose(21.8, 124.9, Math.toRadians(144)));//todo
 
         buildpath();
 
@@ -586,49 +668,69 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
 
 
         froggyroute = new SequentialCommandGroup(
-                new ParallelRaceGroup(
-                        new WaitCommand(4000),
-                        new froggylaunch(everythingsubsystem)
-                        ),
                 new ParallelDeadlineGroup(
-                        new FollowPathCommand(follower, Path1),
-                        new froggyeat(everythingsubsystem)
-                ),
-                new ParallelDeadlineGroup(
-                        new WaitCommand(4000),
+                        new WaitCommand(2500),
                         new froggylaunch(everythingsubsystem),
-                        new FollowPathCommand(follower, Path2)
+                        new FollowPathCommand(follower, Path1)
                 ),
+                new FollowPathCommand(follower, Path2),
                 new ParallelDeadlineGroup(
                         new FollowPathCommand(follower, Path3),
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(4000),
+                        new WaitCommand(2500),
                         new froggylaunch(everythingsubsystem),
                         new FollowPathCommand(follower, Path4)
                 ),
-                new FollowPathCommand(follower, Path5),
                 new ParallelDeadlineGroup(
-                        new FollowPathCommand(follower, Path6 ),
+                        new FollowPathCommand(follower, Path5),
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(4000),
-                        new froggylaunch(everythingsubsystem),
-                        new FollowPathCommand(follower, Path7)
-                ),
-                new ParallelDeadlineGroup(
-                        new FollowPathCommand(follower, Path8),
+                        new WaitCommand(1000),
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(4000),
+                        new WaitCommand(3000),
                         new froggylaunch(everythingsubsystem),
-                        new FollowPathCommand(follower, Path9)
+                        new FollowPathCommand(follower, Path6)
                 ),
-                new FollowPathCommand(follower, Path10)
-        );
+                new ParallelDeadlineGroup(
+                        new FollowPathCommand(follower, Path7),
+                        new froggyeat(everythingsubsystem)
+                ),
+                new ParallelDeadlineGroup(
+                        new WaitCommand(1000),
+                        new froggyeat(everythingsubsystem)
+                ),
+                new ParallelDeadlineGroup(
+                        new WaitCommand(3000),
+                        new froggylaunch(everythingsubsystem),
+                        new FollowPathCommand(follower, Path8)
+                ),
+                new FollowPathCommand(follower, Path9),
+                new ParallelDeadlineGroup(
+                        new FollowPathCommand(follower, Path10),
+                        new froggyeat(everythingsubsystem)
+                ),
+                new ParallelDeadlineGroup(
+                        new WaitCommand(2200),
+                        new froggylaunch(everythingsubsystem),
+                        new FollowPathCommand(follower, Path11)
+                ),
+                new FollowPathCommand(follower, Path12),
+                new ParallelDeadlineGroup(
+                        new FollowPathCommand(follower, Path13),
+                        new froggyeat(everythingsubsystem)
+                ),
+                new ParallelDeadlineGroup(
+                        new WaitCommand(3200),
+                        new froggylaunch(everythingsubsystem),
+                        new FollowPathCommand(follower, Path14)
+                ),
+                new FollowPathCommand(follower, Path15))
+                ;
     }
 
     //RUN//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -641,10 +743,10 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
         super.run();
         follower.update();
 
-//        telemetryData.addData("X", follower.getPose().getX());
-//        telemetryData.addData("Y", follower.getPose().getY());
-//        telemetryData.addData("Heading", follower.getPose().getHeading());
-//        telemetryData.update();
+        telemetryData.addData("X", follower.getPose().getX());
+        telemetryData.addData("Y", follower.getPose().getY());
+        telemetryData.addData("Heading", follower.getPose().getHeading());
+        telemetryData.update();
 
     }
 }

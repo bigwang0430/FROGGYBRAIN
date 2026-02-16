@@ -277,7 +277,7 @@ public class Blue extends OpMode {
                 }
                 break;
             case intaking:
-                intake.set(0.7);
+                intake.set(1.0);
                 transfer.set(0.5);
                 gate.set(globals.gate.close);
                 break;
