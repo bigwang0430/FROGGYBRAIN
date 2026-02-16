@@ -12,6 +12,7 @@ import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.command.CommandBase;
@@ -151,10 +152,12 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
         private PIDController turretPIDF = new PIDController(globals.turret.pFar, globals.turret.i, globals.turret.d);
         private int ballsLaunched = 0;
         private MotorEx l1, l2, intake, transfer;
+        private AnalogInput turretEncoder;
         private PIDController launchPIDF = new PIDController(globals.launcher.p, globals.launcher.i, globals.launcher.d);
         private final PolygonZone farLaunchZone = new PolygonZone(new Point(48, 0), new Point(72, 24), new Point(96, 0));
         private final PolygonZone robotZone = new PolygonZone(18, 18);
         private boolean dip1 = false, dip2 = false;
+        double turretZeroOffset;
         public everythingsubsys(HardwareMap hardwareMap){
             t1 = new CRServoEx(hardwareMap, "t1");
             t2 = new CRServoEx(hardwareMap, "t2");
@@ -191,6 +194,11 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
 
             launchPIDF.setTolerance(50);
             launchPIDF.setPID(globals.launcher.p, globals.launcher.i, globals.launcher.d);
+
+
+            turretEncoder = hardwareMap.get(AnalogInput.class, "turretEncoder");
+
+            turretZeroOffset =  degresToTicks(voltageToDegrees(turretEncoder.getVoltage() - 1.6)) * 2;
         }
 
         public void intaking(){
@@ -221,9 +229,9 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
                 turretAng = 0;
             }
 
-            double turretTarget = degresToTicks((turretAng * 3));
+            double turretTarget = degresToTicks((turretAng * 3)) + turretZeroOffset;
             turretPIDF.setSetPoint(turretTarget);
-            if (Math.abs(turretPIDF.getPositionError()) > 500) {
+            if (Math.abs(turretPIDF.getPositionError()) > 1000) {
                 turretPIDF.setP(globals.turret.pFar);
             } else {
                 turretPIDF.setP(globals.turret.pClose);
@@ -243,6 +251,9 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
         }
         private double degresToTicks(double degree) {
             return (degree * 8192) / 360;
+        }
+        private double voltageToDegrees(double volts) {
+            return ((volts) * 360) / 3.2 ;
         }
         public void RPM() {
             double currentTime = getRuntime();

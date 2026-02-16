@@ -71,6 +71,7 @@ public class Blue extends OpMode {
     private boolean slowDrive = false;
     private boolean turretZeroed = false;
     private int ballsLaunched = 0;
+    private double turretZeroOffset;
 
     private static final FieldManager panelsField = PanelsField.INSTANCE.getField();
     private static final Style robotLook = new Style(
@@ -99,7 +100,7 @@ public class Blue extends OpMode {
         t1.setInverted(true);
         turretEncoder = hardwareMap.get(AnalogInput.class, "turretEncoder");
 
-        turretPIDF.setTolerance(30);
+        turretPIDF.setTolerance(67);
         t1.set(0.001);
         t2.set(0.001);
         l1 = new Motor(hardwareMap, "l1", 28, 6000);
@@ -162,9 +163,7 @@ public class Blue extends OpMode {
         }
 
 
-        double distance = 1.6 - turretEncoder.getVoltage();
-        double target = degresToTicks(voltageToDegrees(distance)) * 2;
-        turretPIDF.setSetPoint(-target);
+        turretZeroOffset =  degresToTicks(voltageToDegrees(turretEncoder.getVoltage() - 1.6)) * 2;
 
 
     }
@@ -287,29 +286,7 @@ public class Blue extends OpMode {
 
     private void launchCalc() {
 
-        if (!turretZeroed) {
-            turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
-            if (Math.abs(turretPIDF.getPositionError()) > 500) {
-                turretPIDF.setP(globals.turret.pFar);
-            } else {
-                turretPIDF.setP(globals.turret.pClose);
-            }
 
-            if (turretPIDF.atSetPoint()) {
-                intake.stopAndResetEncoder();
-                intake.resetEncoder();
-
-                t1.set(0);
-                t2.set(0);
-                turretZeroed = true;
-            } else {
-
-                t1.set(setTurret(turretPower));
-                t2.set(setTurret(turretPower));
-            }
-
-
-        } else {
             double x = follower.getPose().getX();
             double y = follower.getPose().getY();
             Pose robot = new Pose(x, y);
@@ -373,7 +350,7 @@ public class Blue extends OpMode {
                 turretAng = 0;
             }
 
-            double turretTarget = degresToTicks((turretAng * 3));
+            double turretTarget = degresToTicks((turretAng * 3)) + turretZeroOffset;
             turretPIDF.setSetPoint(turretTarget);
             telemetry.addData("ftrer", turretTarget);
 
@@ -384,11 +361,12 @@ public class Blue extends OpMode {
 
 
             if (autoAim) {
-                if (Math.abs(turretPIDF.getPositionError()) > 500) {
+                if (Math.abs(turretPIDF.getPositionError()) > 1000) {
                     turretPIDF.setP(globals.turret.pFar);
                 } else {
                     turretPIDF.setP(globals.turret.pClose);
                 }
+                telemetry.addData("err", Math.abs(turretPIDF.getPositionError()));
                 turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
                 if (!turretPIDF.atSetPoint()) {
                     t1.set(setTurret(turretPower));
@@ -410,7 +388,7 @@ public class Blue extends OpMode {
 
 
         }
-    }
+
     private double setTurret(double power) {
         return Math.signum(power) * (Math.abs(power) + globals.turret.ks);
     }
