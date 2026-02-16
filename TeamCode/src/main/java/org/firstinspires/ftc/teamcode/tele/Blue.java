@@ -338,7 +338,7 @@ public class Blue extends OpMode {
                 }
                 robotLocation = "Close Zone";
             } else if (robotZone.isInside(farLaunchZone)) {
-                targetRPM = (13.09 * dist + 2164.9) * 1.027;
+                targetRPM = (13.09 * dist + 2164.9) * 1.01;
                 hoodAngle = 211.5;
                 robotLocation = "Far Zone";
             } else {

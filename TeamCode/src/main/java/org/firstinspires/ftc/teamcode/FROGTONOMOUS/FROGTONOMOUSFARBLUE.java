@@ -222,7 +222,7 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
             turretAng = Math.toDegrees(AngleUnit.normalizeRadians(follower.getHeading() - goalAngle));
             dist = robotToGoal.getMagnitude();
 
-            targetRPM = (13.09 * dist + 2164.9) * 1.027;
+            targetRPM = (13.09 * dist + 2164.9) * 1.01;
             hoodAngle = 211.5;
 
             if (Math.abs(turretAng) > 120) {

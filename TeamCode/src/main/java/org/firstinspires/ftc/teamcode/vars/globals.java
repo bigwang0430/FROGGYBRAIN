@@ -43,8 +43,8 @@ public class globals {
     @Config
     public static class turret {
         public static float turretOffset = 6F;
-        public static float goalY = 140;
-        public static float goalX = 2;
+        public static float goalY = 138;
+        public static float goalX = 6;
 
         public static float pFar = 0.00006F;
         public static float i = 0F;
