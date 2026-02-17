@@ -331,14 +331,6 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
             dip2 = false;
             ballsLaunched = 0;
         }
-        public boolean launched(){
-            telemetryData.addData("ballslaucnhe", ballsLaunched);
-            telemetryData.addData("dip1", dip1);
-            telemetryData.addData("dip2", dip2);
-            telemetryData.addData("insidezone", robotZone.isInside(farLaunchZone));
-            telemetryData.update();
-            return ballsLaunched >= 2;
-        }
 
         @Override
         public void periodic(){
@@ -508,11 +500,6 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
         @Override
         public void execute(){
             everythingsubsystem.launch();
-        }
-
-        @Override
-        public boolean isFinished(){
-            return everythingsubsystem.launched();
         }
 
         @Override

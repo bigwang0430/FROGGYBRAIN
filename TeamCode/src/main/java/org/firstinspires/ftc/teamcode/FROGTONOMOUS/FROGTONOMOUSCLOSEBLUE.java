@@ -51,15 +51,10 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
     private SequentialCommandGroup froggyroute;
     private int shootnum = 0;
     public PathChain Path1, Path2, Path3, Path4, Path5, Path6, Path7, Path8, Path9, Path10, Path11, Path12, Path13, Path14, Path15;
-    private enum launchMode {
-        SOTM,
-        normal
-    } private launchMode currentLaunchMode = launchMode.normal;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     //PATHS/////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 
     public void buildpath(){
         Path1 = follower.pathBuilder().addPath(
@@ -196,22 +191,11 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
                         new BezierLine(
                                 new Pose(23.000, 35.500),
 
-                                new Pose(53.000, 80.000)
+                                new Pose(58.000, 104.000)
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(147))
 
                 .build();
-
-        Path15 = follower.pathBuilder().addPath(
-                        new BezierLine(
-                                new Pose(53.000, 80.000),
-
-                                new Pose(40.000, 80.000)
-                        )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
-
-                .build();
-
     }
 
     //SUBSYSTEMS///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -282,14 +266,12 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
             intake.set(0);
             transfer.set(0);
         }
-
         private double degresToTicks(double degree) {
             return (degree * 8192) / 360;
         }
         private double voltageToDegrees(double volts) {
             return ((volts) * 360) / 3.2 ;
         }
-
         public void launchcalc() {
             double x = follower.getPose().getX();
             double y = follower.getPose().getY();
@@ -298,6 +280,9 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
             robotZone.setPosition(x, y);
             robotZone.setRotation(follower.getPose().getHeading());
 
+            if (shootnum == 4) {
+                goal = new Pose(0, 134);
+            }
 
 
                     Pose target = goal.minus(robot);
@@ -400,15 +385,6 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
             ballsLaunched = 0;
             shootnum++;
         }
-        public boolean launched(){
-            telemetryData.addData("ballslaucnhe", ballsLaunched);
-            telemetryData.addData("dip1", dip1);
-            telemetryData.addData("dip2", dip2);
-            telemetryData.addData("insidezone", robotZone.isInside(closeLaunchZone));
-            telemetryData.addData("l1 power", l1.get());
-            telemetryData.update();
-            return ballsLaunched >= 2;
-        }
 
         @Override
         public void periodic(){
@@ -464,7 +440,7 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
         public void relocalize() {
             Pose odo = follower.getPose();
             if (odo == null) return;
-
+            
             odoPose = odo;
 
             // Prediction
@@ -472,8 +448,6 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
             double pXPred = pX + globals.kalman.qX;
             double pYPred = pY + globals.kalman.qY;
             double pHPred = pH + globals.qH;
-
-
 
             // no measurement = keep position
             xEst = xPred; yEst = yPred; hEst = hPred;
@@ -493,7 +467,11 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
                     double headingError = zH - hPred;
                     while (headingError > Math.PI) headingError -= 2.0 * Math.PI;
                     while (headingError < -Math.PI) headingError += 2.0 * Math.PI;
-                    double kH = pHPred / (pHPred + globals.rH);
+
+                    double midpointH = 0.15;   // radians (~8.5°)
+                    double steepnessH = 15.0;
+                    double kH = 1.0 / (1.0 + Math.exp(-steepnessH * (Math.abs(headingError) - midpointH)));
+
                     hEst = hPred + kH * headingError;
                     while (hEst > Math.PI) hEst -= 2.0 * Math.PI;
                     while (hEst < -Math.PI) hEst += 2.0 * Math.PI;
@@ -501,8 +479,14 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
 
 
 
-                    double kX = pXPred / (pXPred + globals.kalman.rX);
-                    double kY = pYPred / (pYPred + globals.kalman.rY);
+                    double errorMag = Math.sqrt(Math.pow(zX - xPred, 2) + Math.pow(zY - yPred, 2));
+                    double midpoint = 6.0;
+                    double steepness = 0.8;
+                    double kX = 1.0 / (1.0 + Math.exp(-steepness * (errorMag - midpoint)));
+                    double kY = kX;
+
+                    xEst = xPred + kX * (zX - xPred);
+                    yEst = yPred + kY * (zY - yPred);
 
                     xEst = xPred + kX * (zX - xPred);
                     yEst = yPred + kY * (zY - yPred);
@@ -511,7 +495,6 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
                     pY = (1.0 - kY) * pYPred;
                 }
             }
-
             fusedPose = new Pose(xEst, yEst, hEst);
 
             follower.setPose(fusedPose);
@@ -673,6 +656,10 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
                         new froggylaunch(everythingsubsystem),
                         new FollowPathCommand(follower, Path1)
                 ),
+                new ParallelDeadlineGroup(
+                        new WaitCommand(500),
+                        new froggyaim(visionsubsystem)
+                ),
                 new FollowPathCommand(follower, Path2),
                 new ParallelDeadlineGroup(
                         new FollowPathCommand(follower, Path3),
@@ -715,7 +702,7 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(2200),
+                        new WaitCommand(2000),
                         new froggylaunch(everythingsubsystem),
                         new FollowPathCommand(follower, Path11)
                 ),
@@ -725,11 +712,11 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(3200),
+                        new WaitCommand(4000),
                         new froggylaunch(everythingsubsystem),
                         new FollowPathCommand(follower, Path14)
-                ),
-                new FollowPathCommand(follower, Path15))
+                )
+        )
                 ;
     }
 
