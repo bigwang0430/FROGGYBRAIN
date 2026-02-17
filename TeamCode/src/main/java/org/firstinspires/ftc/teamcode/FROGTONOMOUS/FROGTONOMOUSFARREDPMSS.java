@@ -41,7 +41,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import java.util.List;
 
 @Autonomous
-public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
+public class FROGTONOMOUSFARREDPMSS extends CommandOpMode {
     private Follower follower;
     TelemetryData telemetryData = new TelemetryData(telemetry);
     private ElapsedTime timer = new ElapsedTime();
@@ -58,7 +58,7 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
                         new BezierLine(
                                 new Pose(40.000, 9.00).mirror(),
 
-                                new Pose(9.000, 9.00)
+                                new Pose(9.000, 9.00).mirror()
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -66,9 +66,9 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
 
         Path2 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(9.000, 9.00),
+                                new Pose(9.000, 9.00).mirror(),
 
-                                new Pose(44.000, 9.00)
+                                new Pose(44.000, 9.00).mirror()
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -76,18 +76,18 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
 
         Path3 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(44.000, 9.00),
+                                new Pose(44.000, 9.00).mirror(),
 
-                                new Pose(9.000, 9.00)
+                                new Pose(9.000, 9.00).mirror()
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
                 .build();
 
         Path4 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(9.000, 9.00),
+                                new Pose(9.000, 9.00).mirror(),
 
-                                new Pose(44.000, 9.00)
+                                new Pose(44.000, 9.00).mirror()
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
                 .build();
@@ -95,9 +95,9 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
 
         Path5 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(44.000, 9.00),
+                                new Pose(44.000, 9.00).mirror(),
 
-                                new Pose(42.500, 35.500)
+                                new Pose(42.500, 35.500).mirror()
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -105,9 +105,9 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
 
         Path6 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(42.500, 35.500),
+                                new Pose(42.500, 35.500).mirror(),
 
-                                new Pose(9.000, 35.500)
+                                new Pose(9.000, 35.500).mirror()
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -115,9 +115,9 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
 
         Path7 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(9.000, 35.500),
+                                new Pose(9.000, 35.500).mirror(),
 
-                                new Pose(44.000, 9.000)
+                                new Pose(44.000, 9.000).mirror()
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -126,9 +126,9 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
 
         Path8 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(44.000, 9.000),
+                                new Pose(44.000, 9.000).mirror(),
 
-                                new Pose(9.000, 30.000)
+                                new Pose(9.000, 30.000).mirror()
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -136,9 +136,9 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
 
         Path9 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(9.000, 30.000),
+                                new Pose(9.000, 30.000).mirror(),
 
-                                new Pose(44.000, 9.000)
+                                new Pose(44.000, 9.000).mirror()
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -146,9 +146,9 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
 
         Path10 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(44.000, 9.000),
+                                new Pose(44.000, 9.000).mirror(),
 
-                                new Pose(30.000, 9.000)
+                                new Pose(30.000, 9.000).mirror()
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -223,7 +223,7 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
             double x = follower.getPose().getX();
             double y = follower.getPose().getY();
             Pose robot = new Pose(x, y);
-            Pose goal = new Pose(globals.turret.goalX, globals.turret.goalY);
+            Pose goal = new Pose(144 - globals.turret.goalX, globals.turret.goalY);
             robotZone.setPosition(x, y);
             robotZone.setRotation(follower.getPose().getHeading());
 
@@ -392,7 +392,7 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
         }
 
         follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(new Pose(40, 9, Math.toRadians(180)));//todo
+        follower.setStartingPose(new Pose(40, 9, Math.toRadians(180)).mirror());//todo
 
         buildpath();
 

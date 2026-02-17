@@ -44,7 +44,7 @@ import org.firstinspires.ftc.teamcode.vars.states;
 import java.util.List;
 
 @Autonomous
-public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
+public class FROGTONOMOUSCLOSERED extends CommandOpMode {
     private Follower follower;
     TelemetryData telemetryData = new TelemetryData(telemetry);
     private ElapsedTime timer, looptimer = new ElapsedTime();
@@ -60,9 +60,9 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
     public void buildpath(){
         Path1 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(21.800, 124.900),
+                                new Pose(21.800, 124.900).mirror(),
 
-                                new Pose(47.063, 83.590)
+                                new Pose(47.063, 83.590).mirror()
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(144), Math.toRadians(180))
 
@@ -70,9 +70,9 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
 
         Path2 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(47.063, 83.590),
+                                new Pose(47.063, 83.590).mirror(),
 
-                                new Pose(42.000, 60.000)
+                                new Pose(42.000, 60.000).mirror()
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -80,9 +80,9 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
 
         Path3 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(42.000, 60.000),
+                                new Pose(42.000, 60.000).mirror(),
 
-                                new Pose(23.000, 60.000)
+                                new Pose(23.000, 60.000).mirror()
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -90,9 +90,9 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
 
         Path4 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(23.000, 60.000),
+                                new Pose(23.000, 60.000).mirror(),
 
-                                new Pose(52.000, 78.000)
+                                new Pose(52.000, 78.000).mirror()
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -100,9 +100,9 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
 
         Path5 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(52.000, 78.000),
+                                new Pose(52.000, 78.000).mirror(),
 
-                                new Pose(12.448, 59.776)
+                                new Pose(12.448, 59.776).mirror()
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(147))
 
@@ -110,9 +110,9 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
 
         Path6 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(12.448, 59.776),
+                                new Pose(12.448, 59.776).mirror(),
 
-                                new Pose(54.000, 81.000)
+                                new Pose(54.000, 81.000).mirror()
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(147), Math.toRadians(132))
 
@@ -120,9 +120,9 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
 
         Path7 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(54.000, 81.000),
+                                new Pose(54.000, 81.000).mirror(),
 
-                                new Pose(12.448, 59.776)
+                                new Pose(12.448, 59.776).mirror()
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(132), Math.toRadians(147))
 
@@ -130,9 +130,9 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
 
         Path8 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(12.448, 59.776),
+                                new Pose(12.448, 59.776).mirror(),
 
-                                new Pose(54.000, 81.000)
+                                new Pose(54.000, 81.000).mirror()
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(147), Math.toRadians(180))
 
@@ -140,9 +140,9 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
 
         Path9 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(54.000, 81.000),
+                                new Pose(54.000, 81.000).mirror(),
 
-                                new Pose(42.500, 84.000)
+                                new Pose(42.500, 84.000).mirror()
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -150,9 +150,9 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
 
         Path10 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(42.500, 84.000),
+                                new Pose(42.500, 84.000).mirror(),
 
-                                new Pose(25.000, 84.000)
+                                new Pose(25.000, 84.000).mirror()
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -160,9 +160,9 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
 
         Path11 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(17.000, 84.000),
+                                new Pose(17.000, 84.000).mirror(),
 
-                                new Pose(45.000, 84.000)
+                                new Pose(45.000, 84.000).mirror()
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -170,9 +170,9 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
 
         Path12 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(45.000, 84.000),
+                                new Pose(45.000, 84.000).mirror(),
 
-                                new Pose(42.500, 35.500)
+                                new Pose(42.500, 35.500).mirror()
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -180,9 +180,9 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
 
         Path13 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(42.500, 35.500),
+                                new Pose(42.500, 35.500).mirror(),
 
-                                new Pose(23.000, 35.500)
+                                new Pose(23.000, 35.500).mirror()
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -190,9 +190,9 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
 
         Path14 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(23.000, 35.500),
+                                new Pose(23.000, 35.500).mirror(),
 
-                                new Pose(58.000, 104.000)
+                                new Pose(58.000, 104.000).mirror()
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(147))
 
@@ -277,7 +277,7 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
             double x = follower.getPose().getX();
             double y = follower.getPose().getY();
             Pose robot = new Pose(x, y);
-            Pose goal = new Pose(globals.turret.goalX, globals.turret.goalY);
+            Pose goal = new Pose(144 - globals.turret.goalX, globals.turret.goalY);
             robotZone.setPosition(x, y);
             robotZone.setRotation(follower.getPose().getHeading());
 
@@ -286,12 +286,12 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
             }
 
 
-                    Pose target = goal.minus(robot);
-                    Vector robotToGoal = target.getAsVector();
-                    double goalAngle = Math.atan2(goal.getY() - y, goal.getX() - x);
+            Pose target = goal.minus(robot);
+            Vector robotToGoal = target.getAsVector();
+            double goalAngle = Math.atan2(goal.getY() - y, goal.getX() - x);
 
-                    turretAng = Math.toDegrees(AngleUnit.normalizeRadians(follower.getHeading() - goalAngle));
-                    dist = robotToGoal.getMagnitude();
+            turretAng = Math.toDegrees(AngleUnit.normalizeRadians(follower.getHeading() - goalAngle));
+            dist = robotToGoal.getMagnitude();
 
             if (robotZone.isInside(closeLaunchZone)) {
                 targetRPM = 2414.2 * Math.exp(0.0036 * dist);
@@ -312,20 +312,20 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
             turretPIDF.setSetPoint(turretTarget);
 
 
-                if (Math.abs(turretPIDF.getPositionError()) > 1000) {
-                    turretPIDF.setP(globals.turret.pFar);
-                } else {
-                    turretPIDF.setP(globals.turret.pClose);
-                }
-                telemetry.addData("err", Math.abs(turretPIDF.getPositionError()));
-                turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
-                if (!turretPIDF.atSetPoint() && robotZone.isInside(closeLaunchZone)) {
-                    t1.set(setTurret(turretPower));
-                    t2.set(setTurret(turretPower));
-                } else {
-                    t1.set(0);
-                    t2.set(0);
-                }
+            if (Math.abs(turretPIDF.getPositionError()) > 1000) {
+                turretPIDF.setP(globals.turret.pFar);
+            } else {
+                turretPIDF.setP(globals.turret.pClose);
+            }
+            telemetry.addData("err", Math.abs(turretPIDF.getPositionError()));
+            turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
+            if (!turretPIDF.atSetPoint() && robotZone.isInside(closeLaunchZone)) {
+                t1.set(setTurret(turretPower));
+                t2.set(setTurret(turretPower));
+            } else {
+                t1.set(0);
+                t2.set(0);
+            }
 
         }
         private double setTurret(double power) {
@@ -443,7 +443,7 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
         public void relocalize() {
             Pose odo = follower.getPose();
             if (odo == null) return;
-            
+
             odoPose = odo;
 
             // Prediction
@@ -660,7 +660,7 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
         }
 
         follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(new Pose(21.8, 124.9, Math.toRadians(144)));//todo
+        follower.setStartingPose(new Pose(21.8, 124.9, Math.toRadians(144)).mirror());//todo
 
         buildpath();
 
@@ -734,7 +734,7 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
                         new FollowPathCommand(follower, Path14)
                 )
         )
-                ;
+        ;
     }
 
     //RUN//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -760,4 +760,5 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
 
     }
 }
+
 
