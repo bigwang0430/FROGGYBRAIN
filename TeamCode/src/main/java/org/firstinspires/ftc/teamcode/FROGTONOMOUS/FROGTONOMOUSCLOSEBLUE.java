@@ -51,7 +51,6 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
     private boolean scheduled = false;
     private SequentialCommandGroup froggyroute;
     private int shootnum = 0;
-    private boolean readytoreloc = false;
     public PathChain Path1, Path2, Path3, Path4, Path5, Path6, Path7, Path8, Path9, Path10, Path11, Path12, Path13, Path14, Path15;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -407,6 +406,7 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
         private Pose fusedPose = new Pose(0, 0, 0);
         private Pose odoPose = new Pose(0, 0, 0);
         private double zH=0.0;
+        private boolean relocalized = false;
 
         public visionsubsys(HardwareMap hardwareMap){
             limelight = hardwareMap.get(Limelight3A.class, "limelight");
@@ -496,12 +496,21 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
 
                     pX = (1.0 - kX) * pXPred;
                     pY = (1.0 - kY) * pYPred;
+
+                    fusedPose = new Pose(xEst, yEst, hEst);
+
+                    follower.setPose(fusedPose);
+                    follower.update();
+
+                    relocalized = true;
                 }
             }
-            fusedPose = new Pose(xEst, yEst, hEst);
-
-            follower.setPose(fusedPose);
-            follower.update();
+        }
+        public boolean relocalizedone(){
+            if (relocalized){
+                return true;
+            }
+            return false;
         }
 
         public void balltracking() {
@@ -622,7 +631,16 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
         @Override
         public void initialize(){
             visionsubsystem.pipeline(0);
+        }
+
+        @Override
+        public void execute(){
             visionsubsystem.relocalize();
+        }
+
+        @Override
+        public boolean isFinished(){
+            return visionsubsystem.relocalizedone();
         }
     }
 
@@ -726,6 +744,7 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
             schedule(froggyroute);
             scheduled = true;
             timer.startTime();
+            looptimer.startTime();
         }
         if (timer.seconds() > 29){
             states.autoEndPose = follower.getPose();
