@@ -170,7 +170,6 @@ public class Blue extends OpMode {
 
         turretZeroOffset =  degresToTicks(voltageToDegrees(turretEncoder.getVoltage() - 1.6)) * 2;
 
-
     }
 
     @Override
@@ -319,8 +318,8 @@ public class Blue extends OpMode {
             }
 
             if ((robotZone.isInside(closeLaunchZone) || robotZone.isInside(farLaunchZone)) && !zapLeon ) {
-                gamepad1.rumble(1, 1, 500);
-                telemetry.addLine("jello");
+                gamepad1.rumble(0.2, 0.2, 200);
+
                 zapLeon = true;
             }
 
@@ -535,10 +534,10 @@ public class Blue extends OpMode {
             relocReady = false;
         }
         fusedPose = new Pose(xEst, yEst, hEst);
-        if (relocReady && relocTimer.seconds() > 10) {
+        if ((relocReady && relocTimer.seconds() > 10) || g2.getButton(GamepadKeys.Button.RIGHT_BUMPER))  {
             follower.setPose(fusedPose);
             relocTimer.reset();
-            gamepad2.rumble(500);
+            gamepad2.rumble(0.3, 0.3, 200);
         }
 
         telemetry.addData("timer", relocTimer);
