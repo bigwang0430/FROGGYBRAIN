@@ -238,13 +238,13 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
             }
 
             double turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
-//            if (!turretPIDF.atSetPoint()) {
-//                t1.set(setTurret(turretPower));
-//                t2.set(setTurret(turretPower));
-//            } else {
-//                t1.set(0);
-//                t2.set(0);
-//            }
+            if (!turretPIDF.atSetPoint()) {
+                t1.set(setTurret(turretPower));
+                t2.set(setTurret(turretPower));
+            } else {
+                t1.set(0);
+                t2.set(0);
+            }
         }
         private double setTurret(double power) {
             return Math.signum(power) * (Math.abs(power) + globals.turret.ks);
