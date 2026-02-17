@@ -133,7 +133,7 @@ public class Blue extends OpMode {
         intake.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
         transfer.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
 
-        hood = new ServoEx(hardwareMap, "hood", 300, AngleUnit.DEGREES);
+        hood = new ServoEx(hardwareMap, "hood", 300);
 
         g1 = new GamepadEx(gamepad1);
         g2 = new GamepadEx(gamepad2);

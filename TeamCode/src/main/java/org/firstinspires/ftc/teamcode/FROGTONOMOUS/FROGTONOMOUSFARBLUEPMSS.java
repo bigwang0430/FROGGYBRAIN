@@ -203,7 +203,7 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
             gate = new ServoEx(hardwareMap, "gate");
             gate.set(globals.gate.close);
 
-            hood = new ServoEx(hardwareMap, "hood", 300, AngleUnit.DEGREES);
+            hood = new ServoEx(hardwareMap, "hood", 300);
 
             launchPIDF.setTolerance(50);
             launchPIDF.setPID(globals.launcher.p, globals.launcher.i, globals.launcher.d);
