@@ -485,8 +485,6 @@ public class Blue extends OpMode {
         double pYPred = pY + globals.kalman.qY;
         double pHPred = pH + globals.qH;
 
-
-
         // no measurement = keep position
         xEst = xPred; yEst = yPred; hEst = hPred;
         pX = pXPred; pY = pYPred; pH = pHPred;
@@ -506,7 +504,11 @@ public class Blue extends OpMode {
                 double headingError = zH - hPred;
                 while (headingError > Math.PI) headingError -= 2.0 * Math.PI;
                 while (headingError < -Math.PI) headingError += 2.0 * Math.PI;
-                double kH = pHPred / (pHPred + globals.rH);
+
+                double midpointH = 0.15;   // radians (~8.5°)
+                double steepnessH = 15.0;
+                double kH = 1.0 / (1.0 + Math.exp(-steepnessH * (Math.abs(headingError) - midpointH)));
+
                 hEst = hPred + kH * headingError;
                 while (hEst > Math.PI) hEst -= 2.0 * Math.PI;
                 while (hEst < -Math.PI) hEst += 2.0 * Math.PI;
@@ -514,8 +516,14 @@ public class Blue extends OpMode {
 
 
 
-                double kX = pXPred / (pXPred + globals.kalman.rX);
-                double kY = pYPred / (pYPred + globals.kalman.rY);
+                double errorMag = Math.sqrt(Math.pow(zX - xPred, 2) + Math.pow(zY - yPred, 2));
+                double midpoint = 6.0;
+                double steepness = 0.8;
+                double kX = 1.0 / (1.0 + Math.exp(-steepness * (errorMag - midpoint)));
+                double kY = kX;
+
+                xEst = xPred + kX * (zX - xPred);
+                yEst = yPred + kY * (zY - yPred);
 
                 xEst = xPred + kX * (zX - xPred);
                 yEst = yPred + kY * (zY - yPred);
@@ -539,5 +547,6 @@ public class Blue extends OpMode {
 
 
     }
+
 
 }
