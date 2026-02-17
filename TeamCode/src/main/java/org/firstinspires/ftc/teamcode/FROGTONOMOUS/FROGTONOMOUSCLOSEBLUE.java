@@ -39,6 +39,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.teamcode.tele.Blue;
 import org.firstinspires.ftc.teamcode.vars.globals;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
+import org.firstinspires.ftc.teamcode.vars.states;
 
 import java.util.List;
 
@@ -46,10 +47,11 @@ import java.util.List;
 public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
     private Follower follower;
     TelemetryData telemetryData = new TelemetryData(telemetry);
-    private ElapsedTime timer = new ElapsedTime();
+    private ElapsedTime timer, looptimer = new ElapsedTime();
     private boolean scheduled = false;
     private SequentialCommandGroup froggyroute;
     private int shootnum = 0;
+    private boolean readytoreloc = false;
     public PathChain Path1, Path2, Path3, Path4, Path5, Path6, Path7, Path8, Path9, Path10, Path11, Path12, Path13, Path14, Path15;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -405,6 +407,7 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
         private Pose fusedPose = new Pose(0, 0, 0);
         private Pose odoPose = new Pose(0, 0, 0);
         private double zH=0.0;
+
         public visionsubsys(HardwareMap hardwareMap){
             limelight = hardwareMap.get(Limelight3A.class, "limelight");
             limelight.setPollRateHz(50);
@@ -619,10 +622,6 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
         @Override
         public void initialize(){
             visionsubsystem.pipeline(0);
-        }
-
-        @Override
-        public void execute() {
             visionsubsystem.relocalize();
         }
     }
@@ -679,7 +678,7 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(3000),
+                        new WaitCommand(2800),
                         new froggylaunch(everythingsubsystem),
                         new FollowPathCommand(follower, Path6)
                 ),
@@ -692,7 +691,7 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(3000),
+                        new WaitCommand(2800),
                         new froggylaunch(everythingsubsystem),
                         new FollowPathCommand(follower, Path8)
                 ),
@@ -726,14 +725,19 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
         if (!scheduled) {
             schedule(froggyroute);
             scheduled = true;
+            timer.startTime();
+        }
+        if (timer.seconds() > 29){
+            states.autoEndPose = follower.getPose();
         }
         super.run();
         follower.update();
-
+        telemetryData.addData("loop time", looptimer.seconds());
         telemetryData.addData("X", follower.getPose().getX());
         telemetryData.addData("Y", follower.getPose().getY());
         telemetryData.addData("Heading", follower.getPose().getHeading());
         telemetryData.update();
+        looptimer.reset();
 
     }
 }
