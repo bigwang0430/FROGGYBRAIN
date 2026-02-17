@@ -39,7 +39,7 @@ import java.util.Objects;
 public class Blue extends OpMode {
     private final PolygonZone closeLaunchZone = new PolygonZone(new Point(144, 144), new Point(72, 72), new Point(0, 144));
     private final PolygonZone farLaunchZone = new PolygonZone(new Point(48, 0), new Point(72, 24), new Point(96, 0));
-    private final PolygonZone robotZone = new PolygonZone(18, 18);
+    private final PolygonZone robotZone = new PolygonZone(16, 16);
     
     private Motor l1, l2, intake, transfer;
     private ServoEx hood, gate, tiltl, tiltr;
@@ -88,8 +88,13 @@ public class Blue extends OpMode {
     private Pose fusedPose = new Pose(0, 0, 0);
     private Pose odoPose = new Pose(0, 0, 0);
     private double zH=0.0;
+
+    private boolean zapLeon = false;
+    private ElapsedTime relocTimer = new ElapsedTime();
+    private boolean relocReady = false;
     @Override
     public void init() {
+        relocTimer.startTime();
         timer.startTime();
         GoBildaPinpointDriver pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
         pinpoint.resetPosAndIMU();
@@ -236,34 +241,15 @@ public class Blue extends OpMode {
                 launchPIDF.setSetPoint(targetRPM);
                 launchPower = launchPIDF.calculate(RPM);
                 if (RPM < 400) {
-                    l1.set(0.35);
-                    l2.set(0.35);
+                    l1.set(0.5);
+                    l2.set(0.5);
                 } else {
                     l1.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
                     l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
                 }
 
-                boolean RPMdip = previousRPM - RPM > 100;
-                if (RPMdip && !dip1) {
-                    ballsLaunched++;
-                    dip1 = true;
-                    dip2 = false;
-                } else if (RPMdip && !dip2) {
-                    ballsLaunched++;
-                    dip2 = true;
-                }
+                hood.set(MathFunctions.clamp(hoodAngle, 40, 211.5));
 
-                if (robotZone.equals(farLaunchZone)) {
-                    if (ballsLaunched == 0) {
-                        hood.set(MathFunctions.clamp(hoodAngle, 40, 211.5));
-                    } else if (ballsLaunched == 1) {
-                        hood.set(MathFunctions.clamp(hoodAngle - 10, 40, 211.5));
-                    } else {
-                        hood.set(MathFunctions.clamp(hoodAngle-20, 40, 211.5));
-                    }
-                } else {
-                    hood.set(MathFunctions.clamp(hoodAngle, 40, 211.5));
-                }
 
                 if (launchPIDF.atSetPoint() && !robotLocation.equals("No Zone")) {
                     gate.set(globals.gate.open);
@@ -271,9 +257,12 @@ public class Blue extends OpMode {
                         intake.set(.7);
                         transfer.set(0.7);
                     } else {
-                        intake.set(0.95);
-                        transfer.set(0.95);
+                        intake.set(1);
+                        transfer.set(1);
                     }
+                } else if (!robotZone.isInside(closeLaunchZone) && !robotZone.isInside(farLaunchZone)) {
+                    intake.set(0);
+                    transfer.set(0);
                 }
                 break;
             case intaking:
@@ -328,6 +317,18 @@ public class Blue extends OpMode {
 
                     break;
             }
+
+            if ((robotZone.isInside(closeLaunchZone) || robotZone.isInside(farLaunchZone)) && !zapLeon ) {
+                gamepad1.rumble(1, 1, 500);
+                telemetry.addLine("jello");
+                zapLeon = true;
+            }
+
+            if (!robotZone.isInside(closeLaunchZone) && !robotZone.isInside(farLaunchZone) && zapLeon) {
+                zapLeon = false;
+            }
+
+            telemetry.addData("zap", zapLeon);
 
             if (robotZone.isInside(closeLaunchZone)) {
                 targetRPM = 2414.2 * Math.exp(0.0036 * dist);
@@ -475,6 +476,7 @@ public class Blue extends OpMode {
         Pose odo = follower.getPose();
         if (odo == null) return;
 
+
         odoPose = odo;
 
         // Prediction
@@ -493,6 +495,7 @@ public class Blue extends OpMode {
         if (r != null && r.isValid()) {
             Pose3D bot = r.getBotpose();
             if (bot != null) {
+                relocReady = follower.getVelocity().getMagnitude() < 2;
                 double zX = 72 + (bot.getPosition().y * M_TO_IN);
                 double zY = 72 - (bot.getPosition().x * M_TO_IN);
                 zH = bot.getOrientation().getYaw(AngleUnit.RADIANS);
@@ -520,12 +523,20 @@ public class Blue extends OpMode {
                 pX = (1.0 - kX) * pXPred;
                 pY = (1.0 - kY) * pYPred;
             }
+        } else {
+            relocReady = false;
+        }
+        fusedPose = new Pose(xEst, yEst, hEst);
+        if (relocReady && relocTimer.seconds() > 10) {
+            follower.setPose(fusedPose);
+            relocTimer.reset();
+            gamepad2.rumble(500);
         }
 
-    fusedPose = new Pose(xEst, yEst, hEst);
-        if (g2.getButton(GamepadKeys.Button.RIGHT_BUMPER)) {
-            follower.setPose(fusedPose);
-        }
+        telemetry.addData("timer", relocTimer);
+        telemetry.addData("read", relocReady);
+
+
 
     }
 
