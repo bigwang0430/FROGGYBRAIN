@@ -128,7 +128,7 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
                         new BezierLine(
                                 new Pose(44.000, 9.000),
 
-                                new Pose(9.000, 30.000)
+                                new Pose(9.000, 9.000)
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -136,7 +136,7 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
 
         Path9 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(9.000, 30.000),
+                                new Pose(9.000, 9.000),
 
                                 new Pose(44.000, 9.000)
                         )
@@ -417,10 +417,7 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
                         new FollowPathCommand(follower, Path2)
                 ),
                 new ParallelDeadlineGroup(
-                        new SequentialCommandGroup(
-                                new FollowPathCommand(follower, Path1),
-                                new WaitCommand(500)
-                        ),
+                        new FollowPathCommand(follower, Path1),
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
