@@ -60,7 +60,7 @@ public class FROGTONOMOUSFARREDPMSS extends CommandOpMode {
 
                                 new Pose(9.000, 9.00).mirror()
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setConstantHeadingInterpolation(Math.toRadians(0))
 
                 .build();
 
@@ -70,7 +70,7 @@ public class FROGTONOMOUSFARREDPMSS extends CommandOpMode {
 
                                 new Pose(44.000, 9.00).mirror()
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setConstantHeadingInterpolation(Math.toRadians(0))
 
                 .build();
 
@@ -80,7 +80,7 @@ public class FROGTONOMOUSFARREDPMSS extends CommandOpMode {
 
                                 new Pose(9.000, 9.00).mirror()
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setConstantHeadingInterpolation(Math.toRadians(0))
                 .build();
 
         Path4 = follower.pathBuilder().addPath(
@@ -89,7 +89,7 @@ public class FROGTONOMOUSFARREDPMSS extends CommandOpMode {
 
                                 new Pose(44.000, 9.00).mirror()
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setConstantHeadingInterpolation(Math.toRadians(0))
                 .build();
 
 
@@ -99,7 +99,7 @@ public class FROGTONOMOUSFARREDPMSS extends CommandOpMode {
 
                                 new Pose(42.500, 35.500).mirror()
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setConstantHeadingInterpolation(Math.toRadians(0))
 
                 .build();
 
@@ -109,7 +109,7 @@ public class FROGTONOMOUSFARREDPMSS extends CommandOpMode {
 
                                 new Pose(9.000, 35.500).mirror()
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setConstantHeadingInterpolation(Math.toRadians(0))
 
                 .build();
 
@@ -119,7 +119,7 @@ public class FROGTONOMOUSFARREDPMSS extends CommandOpMode {
 
                                 new Pose(44.000, 9.000).mirror()
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setConstantHeadingInterpolation(Math.toRadians(0))
 
                 .build();
 
@@ -128,19 +128,19 @@ public class FROGTONOMOUSFARREDPMSS extends CommandOpMode {
                         new BezierLine(
                                 new Pose(44.000, 9.000).mirror(),
 
-                                new Pose(9.000, 30.000).mirror()
+                                new Pose(9.000, 9.000).mirror()
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setConstantHeadingInterpolation(Math.toRadians(0))
 
                 .build();
 
         Path9 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(9.000, 30.000).mirror(),
+                                new Pose(9.000, 9.000).mirror(),
 
                                 new Pose(44.000, 9.000).mirror()
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setConstantHeadingInterpolation(Math.toRadians(0))
 
                 .build();
 
@@ -150,7 +150,7 @@ public class FROGTONOMOUSFARREDPMSS extends CommandOpMode {
 
                                 new Pose(30.000, 9.000).mirror()
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setConstantHeadingInterpolation(Math.toRadians(0))
 
                 .build();
     }
@@ -417,10 +417,7 @@ public class FROGTONOMOUSFARREDPMSS extends CommandOpMode {
                         new FollowPathCommand(follower, Path2)
                 ),
                 new ParallelDeadlineGroup(
-                        new SequentialCommandGroup(
-                                new FollowPathCommand(follower, Path1),
-                                new WaitCommand(500)
-                        ),
+                                new FollowPathCommand(follower, Path3),
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(

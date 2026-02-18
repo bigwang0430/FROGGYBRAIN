@@ -42,7 +42,7 @@ public class globals {
 
     @Config
     public static class turret {
-        public static float turretOffset = 6F;
+        public static float turretOffset = 350F;
         public static float goalY = 138;
         public static float goalX = 6;
 
@@ -65,6 +65,6 @@ public class globals {
         public static double yoff = -131.25;
     }
     public static double pHg = 1.0;
-    public static double qH = 0.003;
-    public static double rH = 0.02;
+    public static double qH = 0.29;
+    public static double rH = 0.009;
 }

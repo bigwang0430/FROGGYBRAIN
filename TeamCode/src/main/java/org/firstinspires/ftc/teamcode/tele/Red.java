@@ -168,7 +168,7 @@ public class Red extends OpMode {
         }
 
 
-        turretZeroOffset =  degresToTicks(voltageToDegrees(turretEncoder.getVoltage() - 1.6)) * 2;
+        turretZeroOffset =  degresToTicks(voltageToDegrees(turretEncoder.getVoltage() - 1.6)) * 2 + globals.turret.turretOffset;
 
     }
 
@@ -412,7 +412,7 @@ public class Red extends OpMode {
 
         if (g1.getButton(GamepadKeys.Button.DPAD_UP )) {
             //follower.setStartingPose(new Pose(136, 8, Math.toRadians(90)));
-            follower.setPose(new Pose(14.731707317073187, 79.64878048780488, Math.PI/2));
+            follower.setPose(new Pose(144 - 14.731707317073187, 79.64878048780488, Math.PI/2));
         }
 
         if (g1.getButton(GamepadKeys.Button.CROSS) && !prevCross1) {

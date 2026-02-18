@@ -64,7 +64,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
 
                                 new Pose(47.063, 83.590).mirror()
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(144), Math.toRadians(180))
+                ).setLinearHeadingInterpolation(Math.toRadians(36), Math.toRadians(0))
 
                 .build();
 
@@ -74,7 +74,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
 
                                 new Pose(42.000, 60.000).mirror()
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setConstantHeadingInterpolation(Math.toRadians(0))
 
                 .build();
 
@@ -84,7 +84,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
 
                                 new Pose(23.000, 60.000).mirror()
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setConstantHeadingInterpolation(Math.toRadians(0))
 
                 .build();
 
@@ -94,7 +94,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
 
                                 new Pose(52.000, 78.000).mirror()
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setConstantHeadingInterpolation(Math.toRadians(0))
 
                 .build();
 
@@ -104,7 +104,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
 
                                 new Pose(12.448, 59.776).mirror()
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(147))
+                ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(33))
 
                 .build();
 
@@ -114,7 +114,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
 
                                 new Pose(54.000, 81.000).mirror()
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(147), Math.toRadians(132))
+                ).setLinearHeadingInterpolation(Math.toRadians(33), Math.toRadians(48))
 
                 .build();
 
@@ -124,7 +124,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
 
                                 new Pose(12.448, 59.776).mirror()
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(132), Math.toRadians(147))
+                ).setLinearHeadingInterpolation(Math.toRadians(48), Math.toRadians(33))
 
                 .build();
 
@@ -134,7 +134,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
 
                                 new Pose(54.000, 81.000).mirror()
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(147), Math.toRadians(180))
+                ).setLinearHeadingInterpolation(Math.toRadians(33), Math.toRadians(0))
 
                 .build();
 
@@ -144,7 +144,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
 
                                 new Pose(42.500, 84.000).mirror()
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setConstantHeadingInterpolation(Math.toRadians(0))
 
                 .build();
 
@@ -154,7 +154,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
 
                                 new Pose(25.000, 84.000).mirror()
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setConstantHeadingInterpolation(Math.toRadians(0))
 
                 .build();
 
@@ -164,7 +164,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
 
                                 new Pose(45.000, 84.000).mirror()
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setConstantHeadingInterpolation(Math.toRadians(0))
 
                 .build();
 
@@ -174,7 +174,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
 
                                 new Pose(42.500, 35.500).mirror()
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setConstantHeadingInterpolation(Math.toRadians(0))
 
                 .build();
 
@@ -184,7 +184,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
 
                                 new Pose(23.000, 35.500).mirror()
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setConstantHeadingInterpolation(Math.toRadians(0))
 
                 .build();
 
@@ -194,7 +194,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
 
                                 new Pose(58.000, 104.000).mirror()
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(147))
+                ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(33))
 
                 .build();
     }
@@ -743,12 +743,11 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
         if (!scheduled) {
             schedule(froggyroute);
             scheduled = true;
-            timer.startTime();
-            looptimer.startTime();
+
         }
-        if (timer.seconds() > 29){
+
             states.autoEndPose = follower.getPose();
-        }
+
         super.run();
         follower.update();
         telemetryData.addData("loop time", looptimer.seconds());

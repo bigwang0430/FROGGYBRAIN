@@ -89,9 +89,10 @@ public class Blue extends OpMode {
     private Pose odoPose = new Pose(0, 0, 0);
     private double zH=0.0;
 
-    private boolean zapLeon = false;
+    private boolean zapLeon = false, leftBumper = false, rightBumper = false;
     private ElapsedTime relocTimer = new ElapsedTime();
     private boolean relocReady = false;
+    private double initialTurretOffset = 0F;
     @Override
     public void init() {
         relocTimer.startTime();
@@ -168,7 +169,7 @@ public class Blue extends OpMode {
         }
 
 
-        turretZeroOffset =  degresToTicks(voltageToDegrees(turretEncoder.getVoltage() - 1.6)) * 2;
+        turretZeroOffset =  (degresToTicks(voltageToDegrees(turretEncoder.getVoltage() - 1.6)) * 2) + globals.turret.turretOffset;
 
     }
 
@@ -295,7 +296,9 @@ public class Blue extends OpMode {
                     double accelAngle = Math.toRadians(Math.floor(Math.toDegrees(follower.getAcceleration().getTheta())));
                     Vector accel = new Vector(accelMag, accelAngle); // calculate acceleration rounded to nearest inch/s, nearest degree (in inch/s^2, rad)
 
-                    Vector velocity = follower.getVelocity().plus(new Vector(accel.getMagnitude() * globals.launcher.velTime, accel.getTheta())); // create a velocity vector by using v = u + at
+                    Vector velocity = follower.getVelocity().plus(
+                                new Vector(accel.getMagnitude()
+                                * globals.launcher.velTime, accel.getTheta())); // create a velocity vector by using v = u + at
 
                     double distanceDiff = velocity.getMagnitude() * (0.0025 * dist + 0.3871);
                     Vector robotVelocity = new Vector(distanceDiff, velocity.getTheta());
@@ -357,6 +360,14 @@ public class Blue extends OpMode {
             if (g2.getButton(GamepadKeys.Button.OPTIONS) && !prevOptions2) {
                 autoAim = !autoAim;
             }
+
+            if (g1.getButton(GamepadKeys.Button.RIGHT_BUMPER) && !rightBumper) {
+                turretZeroOffset += 250;
+            } else if (g1.getButton(GamepadKeys.Button.LEFT_BUMPER) && !leftBumper) {
+                turretZeroOffset -= 250;
+            }
+            rightBumper = g1.getButton(GamepadKeys.Button.RIGHT_BUMPER);
+            leftBumper = g1.getButton(GamepadKeys.Button.LEFT_BUMPER);
             prevOptions2 = g2.getButton(GamepadKeys.Button.OPTIONS);
 
 
@@ -377,8 +388,18 @@ public class Blue extends OpMode {
                 }
                 turretPos = intake.getCurrentPosition();
             } else {
-                turretPos -=  200* (g2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) - g2.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER));
-                turretPIDF.setSetPoint(MathFunctions.clamp(turretPos, -8000, 8000));
+                if (Math.abs(turretPIDF.getPositionError()) > 1000) {
+                    turretPIDF.setP(globals.turret.pFar);
+                } else {
+                    turretPIDF.setP(globals.turret.pClose);
+                }
+                turretPos +=  400* (g2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) - g2.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER));
+                turretPIDF.setSetPoint(MathFunctions.clamp(turretPos, -6000 + turretZeroOffset, 6000 + turretZeroOffset));
+                if (Math.abs(turretPIDF.getPositionError()) > 1000) {
+                    turretPIDF.setP(globals.turret.pFar);
+                } else {
+                    turretPIDF.setP(globals.turret.pClose);
+                }
                 turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
                 t1.set(setTurret(turretPower));
                 t2.set(setTurret(turretPower));
@@ -410,10 +431,30 @@ public class Blue extends OpMode {
             leftY = 0;
         }
 
-        if (g1.getButton(GamepadKeys.Button.DPAD_UP )) {
+        if (g1.getButton(GamepadKeys.Button.SQUARE)) {
             //follower.setStartingPose(new Pose(136, 8, Math.toRadians(90)));
-            follower.setPose(new Pose(14.731707317073187, 79.64878048780488, Math.PI/2));
+            follower.setHeading(Math.PI/2);
         }
+
+        if (g1.getButton(GamepadKeys.Button.CIRCLE)) {
+            follower.setPose(new Pose(16, 80, Math.toRadians(90)));
+        }
+
+        if (g1.getButton(GamepadKeys.Button.DPAD_UP)) {
+            follower.setX(8.5);
+        }
+
+        if (g1.getButton(GamepadKeys.Button.DPAD_LEFT)) {
+            follower.setY(9);
+        }
+        if (g1.getButton(GamepadKeys.Button.DPAD_DOWN)) {
+            follower.setX(135);
+        }
+        if (g1.getButton(GamepadKeys.Button.DPAD_RIGHT)) {
+            follower.setY(135);
+        }
+
+
 
         if (g1.getButton(GamepadKeys.Button.CROSS) && !prevCross1) {
             slowDrive = !slowDrive;
@@ -475,7 +516,6 @@ public class Blue extends OpMode {
         Pose odo = follower.getPose();
         if (odo == null) return;
 
-
         odoPose = odo;
 
         // Prediction
@@ -483,6 +523,8 @@ public class Blue extends OpMode {
         double pXPred = pX + globals.kalman.qX;
         double pYPred = pY + globals.kalman.qY;
         double pHPred = pH + globals.qH;
+
+
 
         // no measurement = keep position
         xEst = xPred; yEst = yPred; hEst = hPred;
@@ -492,7 +534,11 @@ public class Blue extends OpMode {
         if (r != null && r.isValid()) {
             Pose3D bot = r.getBotpose();
             if (bot != null) {
-                relocReady = follower.getVelocity().getMagnitude() < 2;
+                if (follower.getVelocity().getMagnitude() < 6) {
+                    relocReady = true;
+                } else {
+                    relocReady = false;
+                }
                 double zX = 72 + (bot.getPosition().y * M_TO_IN);
                 double zY = 72 - (bot.getPosition().x * M_TO_IN);
                 zH = bot.getOrientation().getYaw(AngleUnit.RADIANS);
@@ -503,11 +549,7 @@ public class Blue extends OpMode {
                 double headingError = zH - hPred;
                 while (headingError > Math.PI) headingError -= 2.0 * Math.PI;
                 while (headingError < -Math.PI) headingError += 2.0 * Math.PI;
-
-                double midpointH = 0.15;   // radians (~8.5°)
-                double steepnessH = 15.0;
-                double kH = 1.0 / (1.0 + Math.exp(-steepnessH * (Math.abs(headingError) - midpointH)));
-
+                double kH = pHPred / (pHPred + globals.rH);
                 hEst = hPred + kH * headingError;
                 while (hEst > Math.PI) hEst -= 2.0 * Math.PI;
                 while (hEst < -Math.PI) hEst += 2.0 * Math.PI;
@@ -515,14 +557,8 @@ public class Blue extends OpMode {
 
 
 
-                double errorMag = Math.sqrt(Math.pow(zX - xPred, 2) + Math.pow(zY - yPred, 2));
-                double midpoint = 6.0;
-                double steepness = 0.8;
-                double kX = 1.0 / (1.0 + Math.exp(-steepness * (errorMag - midpoint)));
-                double kY = kX;
-
-                xEst = xPred + kX * (zX - xPred);
-                yEst = yPred + kY * (zY - yPred);
+                double kX = pXPred / (pXPred + globals.kalman.rX);
+                double kY = pYPred / (pYPred + globals.kalman.rY);
 
                 xEst = xPred + kX * (zX - xPred);
                 yEst = yPred + kY * (zY - yPred);
@@ -530,13 +566,14 @@ public class Blue extends OpMode {
                 pX = (1.0 - kX) * pXPred;
                 pY = (1.0 - kY) * pYPred;
             }
+
         } else {
             relocReady = false;
         }
         fusedPose = new Pose(xEst, yEst, hEst);
-        if ((relocReady && relocTimer.seconds() > 10) || g2.getButton(GamepadKeys.Button.RIGHT_BUMPER))  {
-            follower.setPose(fusedPose);
-            relocTimer.reset();
+        if (relocReady && g2.getButton(GamepadKeys.Button.DPAD_DOWN))  {
+            follower.setX(fusedPose.getX());
+            follower.setY(fusedPose.getY());
             gamepad2.rumble(0.3, 0.3, 200);
         }
 

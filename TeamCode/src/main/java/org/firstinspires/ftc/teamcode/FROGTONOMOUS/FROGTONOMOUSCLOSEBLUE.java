@@ -47,7 +47,8 @@ import java.util.List;
 public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
     private Follower follower;
     TelemetryData telemetryData = new TelemetryData(telemetry);
-    private ElapsedTime timer, looptimer = new ElapsedTime();
+    private ElapsedTime looptimer = new ElapsedTime();
+    private ElapsedTime timer = new ElapsedTime();
     private boolean scheduled = false;
     private SequentialCommandGroup froggyroute;
     private int shootnum = 0;
@@ -746,9 +747,8 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
             timer.startTime();
             looptimer.startTime();
         }
-        if (timer.seconds() > 29){
-            states.autoEndPose = follower.getPose();
-        }
+
+        states.autoEndPose = follower.getPose();
         super.run();
         follower.update();
         telemetryData.addData("loop time", looptimer.seconds());

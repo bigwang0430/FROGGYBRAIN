@@ -14,8 +14,8 @@ public class servotest extends OpMode {
 
     @Override
     public void init(){
-        t1 = new ServoEx(hardwareMap, "t1", 300, AngleUnit.DEGREES);
-        t2 = new ServoEx(hardwareMap, "t2", 300, AngleUnit.DEGREES);
+        t1 = new ServoEx(hardwareMap, "t1", 300);
+        t2 = new ServoEx(hardwareMap, "t2", 300);
 
         t1.set(0);
         t2.set(0);
