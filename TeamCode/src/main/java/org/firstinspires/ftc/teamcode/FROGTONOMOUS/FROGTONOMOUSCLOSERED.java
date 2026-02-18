@@ -43,7 +43,7 @@ import org.firstinspires.ftc.teamcode.vars.states;
 
 import java.util.List;
 
-@Autonomous
+@Autonomous (name = "18 Red Close")
 public class FROGTONOMOUSCLOSERED extends CommandOpMode {
     private Follower follower;
     TelemetryData telemetryData = new TelemetryData(telemetry);
@@ -220,8 +220,8 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
             t2.setInverted(true);
             t1.setInverted(true);
             turretPIDF.setTolerance(67);
-            t1.set(0.001);
-            t2.set(0.001);
+            t1.set(0.01);
+            t2.set(0.01);
 
 
             intake = new MotorEx(hardwareMap, "intake");
@@ -253,7 +253,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
             launchPIDF.setPID(globals.launcher.p, globals.launcher.i, globals.launcher.d);
 
             turretEncoder = hardwareMap.get(AnalogInput.class, "turretEncoder");
-
+            telemetryData.addData("voltage", turretEncoder.getVoltage());
             turretZeroOffset =  degresToTicks(voltageToDegrees(turretEncoder.getVoltage() - 1.6)) * 2;
 
         }

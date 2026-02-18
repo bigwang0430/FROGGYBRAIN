@@ -52,8 +52,8 @@ public class turretTest extends OpMode {
 //            t2.set(0);
 //        }
 
-        t1.set(0);
-        t2.set(0);
+        t1.set(0.0001);
+        t2.set(0.0001);
 
         telemetry.addData("voltage", turretEncoder.getVoltage());
         TelemetryPacket rpmPacket = new TelemetryPacket();

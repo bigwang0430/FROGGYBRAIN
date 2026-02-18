@@ -211,7 +211,7 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
             launchPIDF.setPID(globals.launcher.p, globals.launcher.i, globals.launcher.d);
 
             turretEncoder = hardwareMap.get(AnalogInput.class, "turretEncoder");
-
+            telemetryData.addData("voltage", turretEncoder.getVoltage());
             turretZeroOffset =  degresToTicks(voltageToDegrees(turretEncoder.getVoltage() - 1.6)) * 2;
 
         }
