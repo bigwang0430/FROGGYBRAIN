@@ -41,13 +41,14 @@ import org.firstinspires.ftc.teamcode.vars.states;
 
 import java.util.List;
 
-@Autonomous
+@Autonomous (name = "Far Blue PMSS")
 public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
     private Follower follower;
     TelemetryData telemetryData = new TelemetryData(telemetry);
     private ElapsedTime timer = new ElapsedTime();
     private boolean scheduled = false;
     private SequentialCommandGroup froggyroute;
+    private int shootnum = 0;
     public PathChain Path1, Path2, Path3, Path4, Path5, Path6, Path7, Path8, Path9, Path10;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -177,8 +178,8 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
             t2.setInverted(true);
             t1.setInverted(true);
             turretPIDF.setTolerance(67);
-            t1.set(0.001);
-            t2.set(0.001);
+            t1.set(0.01);
+            t2.set(0.01);
 
 
             intake = new MotorEx(hardwareMap, "intake");
@@ -260,7 +261,12 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
             }
         }
         public void intakedone(){
-            intake.set(0);
+            if (shootnum ==1){
+                intake.set(1);
+            } else {
+                intake.set(0);
+                transfer.set(0);
+            }
         }
         private double setTurret(double power) {
             return Math.signum(power) * (Math.abs(power) + globals.turret.ks);
@@ -291,8 +297,8 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
             launchPIDF.setSetPoint(targetRPM);
             launchPower = launchPIDF.calculate(RPM);
             if (RPM < 300) {
-                l1.set(0.35);
-                l2.set(0.35);
+                l1.set(0.5);
+                l2.set(0.5);
             } else {
                 l1.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
                 l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
@@ -330,6 +336,7 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
             dip1 = false;
             dip2 = false;
             ballsLaunched = 0;
+            shootnum++;
         }
 
         @Override

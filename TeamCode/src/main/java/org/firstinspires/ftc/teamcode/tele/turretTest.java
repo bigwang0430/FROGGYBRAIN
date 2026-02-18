@@ -32,8 +32,8 @@ public class turretTest extends OpMode {
         turretEncoder = hardwareMap.get(AnalogInput.class, "turretEncoder");
         intake = new Motor(hardwareMap, "intake");
         turretPIDF.setTolerance(67);
-        t1.set(0.0001);
-        t2.set(0.0001);
+        t1.set(0.01);
+        t2.set(0.01);
 
     }
 
@@ -53,10 +53,8 @@ public class turretTest extends OpMode {
 //        }
 
         t1.set(0);
-            t2.set(0);
+        t2.set(0);
 
-        telemetry.addData("pwoer", turretPower);
-        telemetry.addData("pos", intake.getCurrentPosition());
         telemetry.addData("voltage", turretEncoder.getVoltage());
         TelemetryPacket rpmPacket = new TelemetryPacket();
         rpmPacket.put("pos", intake.getCurrentPosition());

@@ -69,7 +69,7 @@ public class Blue extends OpMode {
     private boolean prevCross1, prevOptions2;
     private boolean autoAim = true, dip1 = false, dip2 = true;
     private boolean slowDrive = false;
-    private boolean turretZeroed = false;
+    private boolean turretZeroed = false, turretInRange;
     private int ballsLaunched = 0;
     private double turretZeroOffset;
 
@@ -169,7 +169,7 @@ public class Blue extends OpMode {
         }
 
 
-        turretZeroOffset =  (degresToTicks(voltageToDegrees(turretEncoder.getVoltage() - 1.6)) * 2) + globals.turret.turretOffset;
+        turretZeroOffset = Math.abs(turretEncoder.getVoltage()) < 0.005 ? 0 : (degresToTicks(voltageToDegrees(turretEncoder.getVoltage() - 1.6)) * 2) + globals.turret.turretOffset;
 
     }
 
@@ -212,13 +212,28 @@ public class Blue extends OpMode {
     }
 
     private void launch() {
-
+        launchPIDF.setSetPoint(targetRPM);
 
         launchPIDF.setPID(globals.launcher.p, globals.launcher.i, globals.launcher.d);
         if (g2.getButton(GamepadKeys.Button.CROSS)) {
-            currentLaunchState = launchState.launching;
-        } else if (g2.getButton(GamepadKeys.Button.TRIANGLE) || g1.getButton(GamepadKeys.Button.TRIANGLE)) {
+
+
+            launchPower = launchPIDF.calculate(RPM);
+            if (RPM < 400) {
+                l1.set(0.65);
+                l2.set(0.65);
+            } else {
+                l1.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
+                l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
+            }
+            hood.set(MathFunctions.clamp(hoodAngle, 40, 211.5));
+
+
+        }
+        if (g2.getButton(GamepadKeys.Button.TRIANGLE) || g1.getButton(GamepadKeys.Button.TRIANGLE)) {
             currentLaunchState = launchState.intaking;
+        } else if (g2.getButton(GamepadKeys.Button.DPAD_UP) && launchPIDF.atSetPoint()) {
+            currentLaunchState = launchState.launching;
         } else {
             currentLaunchState = launchState.idle;
         }
@@ -226,9 +241,6 @@ public class Blue extends OpMode {
         switch (currentLaunchState) {
 
             case idle:
-                ballsLaunched = 0;
-                dip1 = false;
-                dip2 = true;
                 l1.set(0);
                 l2.set(0);
                 intake.set(0);
@@ -237,21 +249,7 @@ public class Blue extends OpMode {
                 break;
 
             case launching:
-
-                launchPIDF.setSetPoint(targetRPM);
-                launchPower = launchPIDF.calculate(RPM);
-                if (RPM < 400) {
-                    l1.set(0.5);
-                    l2.set(0.5);
-                } else {
-                    l1.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
-                    l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
-                }
-
-                hood.set(MathFunctions.clamp(hoodAngle, 40, 211.5));
-
-
-                if (launchPIDF.atSetPoint() && !robotLocation.equals("No Zone")) {
+                if (launchPIDF.atSetPoint() && !robotLocation.equals("No Zone") && turretInRange) {
                     gate.set(globals.gate.open);
                     if (Objects.equals(robotLocation, "Far Zone")) {
                         intake.set(.7);
@@ -321,7 +319,7 @@ public class Blue extends OpMode {
             }
 
             if ((robotZone.isInside(closeLaunchZone) || robotZone.isInside(farLaunchZone)) && !zapLeon ) {
-                gamepad1.rumble(0.2, 0.2, 200);
+                gamepad1.rumble(0.6, 0.6, 400);
 
                 zapLeon = true;
             }
@@ -345,17 +343,20 @@ public class Blue extends OpMode {
                 hoodAngle = 211.5;
                 robotLocation = "Far Zone";
             } else {
-                targetRPM = 3000;
+                targetRPM = (13.09 * dist + 2164.9) * 1.01;
                 robotLocation = "No Zone";
             }
 
             if (Math.abs(turretAng) > 120) {
                 turretAng = 0;
+                turretInRange = false;
+            } else  {
+                turretInRange = true;
             }
 
             double turretTarget = degresToTicks((turretAng * 3)) + turretZeroOffset;
             turretPIDF.setSetPoint(turretTarget);
-            telemetry.addData("ftrer", turretTarget);
+
 
             if (g2.getButton(GamepadKeys.Button.OPTIONS) && !prevOptions2) {
                 autoAim = !autoAim;
@@ -377,7 +378,6 @@ public class Blue extends OpMode {
                 } else {
                     turretPIDF.setP(globals.turret.pClose);
                 }
-                telemetry.addData("err", Math.abs(turretPIDF.getPositionError()));
                 turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
                 if (!turretPIDF.atSetPoint()) {
                     t1.set(setTurret(turretPower));
@@ -388,6 +388,7 @@ public class Blue extends OpMode {
                 }
                 turretPos = intake.getCurrentPosition();
             } else {
+                turretInRange = true;
                 if (Math.abs(turretPIDF.getPositionError()) > 1000) {
                     turretPIDF.setP(globals.turret.pFar);
                 } else {
@@ -466,7 +467,7 @@ public class Blue extends OpMode {
             follower.setMaxPower(0.9);
         }
 
-        follower.setTeleOpDrive(leftY, -leftX, g1.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) - g1.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER), true);
+        follower.setTeleOpDrive(leftY, -leftX, 0.75 * (g1.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) - g1.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER)), false);
 
     }
 
