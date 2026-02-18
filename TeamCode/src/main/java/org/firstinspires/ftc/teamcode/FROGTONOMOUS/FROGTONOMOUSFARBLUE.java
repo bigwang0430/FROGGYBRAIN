@@ -37,6 +37,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.teamcode.vars.globals;
 import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
+import org.firstinspires.ftc.teamcode.vars.states;
 
 import java.util.List;
 
@@ -603,6 +604,7 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
     public void run() {
         super.run();
         follower.update();
+        states.autoEndPose = follower.getPose();
 
 //        telemetryData.addData("X", follower.getPose().getX());
 //        telemetryData.addData("Y", follower.getPose().getY());

@@ -145,7 +145,7 @@ public class Blue extends OpMode {
         follower.setStartingPose(states.autoEndPose); //TEMPORARY
 
 
-        while (timer.seconds() < 0.5) {
+        while (timer.seconds() < 1) {
             telemetry.addData("timer", timer.seconds());
             telemetry.update();
         }
@@ -440,21 +440,22 @@ public class Blue extends OpMode {
         if (g1.getButton(GamepadKeys.Button.CIRCLE)) {
             follower.setPose(new Pose(16, 80, Math.toRadians(90)));
         }
-
         if (g1.getButton(GamepadKeys.Button.DPAD_UP)) {
-            follower.setX(8.5);
+            follower.setY(135);
+
         }
 
         if (g1.getButton(GamepadKeys.Button.DPAD_LEFT)) {
-            follower.setY(9);
+            follower.setX(8.5);
+
         }
         if (g1.getButton(GamepadKeys.Button.DPAD_DOWN)) {
-            follower.setX(135);
+            follower.setY(9);
+
         }
         if (g1.getButton(GamepadKeys.Button.DPAD_RIGHT)) {
-            follower.setY(135);
+            follower.setX(135);
         }
-
 
 
         if (g1.getButton(GamepadKeys.Button.CROSS) && !prevCross1) {

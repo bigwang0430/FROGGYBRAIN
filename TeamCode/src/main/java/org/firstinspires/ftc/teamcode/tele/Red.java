@@ -35,7 +35,7 @@ import org.firstinspires.ftc.teamcode.vars.states;
 import java.sql.SQLData;
 import java.util.Objects;
 
-@TeleOp(name = "red")
+@TeleOp(name = "Red")
 public class Red extends OpMode {
     private final PolygonZone closeLaunchZone = new PolygonZone(new Point(144, 144), new Point(72, 72), new Point(0, 144));
     private final PolygonZone farLaunchZone = new PolygonZone(new Point(48, 0), new Point(72, 24), new Point(96, 0));
@@ -69,7 +69,7 @@ public class Red extends OpMode {
     private boolean prevCross1, prevOptions2;
     private boolean autoAim = true, dip1 = false, dip2 = true;
     private boolean slowDrive = false;
-    private boolean turretZeroed = false;
+    private boolean turretZeroed = false, turretInRange;
     private int ballsLaunched = 0;
     private double turretZeroOffset;
 
@@ -89,9 +89,10 @@ public class Red extends OpMode {
     private Pose odoPose = new Pose(0, 0, 0);
     private double zH=0.0;
 
-    private boolean zapLeon = false;
+    private boolean zapLeon = false, leftBumper = false, rightBumper = false;
     private ElapsedTime relocTimer = new ElapsedTime();
     private boolean relocReady = false;
+    private double initialTurretOffset = 0F;
     @Override
     public void init() {
         relocTimer.startTime();
@@ -168,7 +169,7 @@ public class Red extends OpMode {
         }
 
 
-        turretZeroOffset =  degresToTicks(voltageToDegrees(turretEncoder.getVoltage() - 1.6)) * 2 + globals.turret.turretOffset;
+        turretZeroOffset = Math.abs(turretEncoder.getVoltage()) < 0.005 ? 0 : (degresToTicks(voltageToDegrees(turretEncoder.getVoltage() - 1.6)) * 2) + globals.turret.turretOffset;
 
     }
 
@@ -211,13 +212,28 @@ public class Red extends OpMode {
     }
 
     private void launch() {
-
+        launchPIDF.setSetPoint(targetRPM);
 
         launchPIDF.setPID(globals.launcher.p, globals.launcher.i, globals.launcher.d);
         if (g2.getButton(GamepadKeys.Button.CROSS)) {
-            currentLaunchState = launchState.launching;
-        } else if (g2.getButton(GamepadKeys.Button.TRIANGLE) || g1.getButton(GamepadKeys.Button.TRIANGLE)) {
+
+
+            launchPower = launchPIDF.calculate(RPM);
+            if (RPM < 400) {
+                l1.set(0.65);
+                l2.set(0.65);
+            } else {
+                l1.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
+                l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
+            }
+            hood.set(MathFunctions.clamp(hoodAngle, 40, 211.5));
+
+
+        }
+        if (g2.getButton(GamepadKeys.Button.TRIANGLE) || g1.getButton(GamepadKeys.Button.TRIANGLE)) {
             currentLaunchState = launchState.intaking;
+        } else if (g2.getButton(GamepadKeys.Button.DPAD_UP) && launchPIDF.atSetPoint()) {
+            currentLaunchState = launchState.launching;
         } else {
             currentLaunchState = launchState.idle;
         }
@@ -225,9 +241,6 @@ public class Red extends OpMode {
         switch (currentLaunchState) {
 
             case idle:
-                ballsLaunched = 0;
-                dip1 = false;
-                dip2 = true;
                 l1.set(0);
                 l2.set(0);
                 intake.set(0);
@@ -236,21 +249,7 @@ public class Red extends OpMode {
                 break;
 
             case launching:
-
-                launchPIDF.setSetPoint(targetRPM);
-                launchPower = launchPIDF.calculate(RPM);
-                if (RPM < 400) {
-                    l1.set(0.5);
-                    l2.set(0.5);
-                } else {
-                    l1.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
-                    l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
-                }
-
-                hood.set(MathFunctions.clamp(hoodAngle, 40, 211.5));
-
-
-                if (launchPIDF.atSetPoint() && !robotLocation.equals("No Zone")) {
+                if (launchPIDF.atSetPoint() && !robotLocation.equals("No Zone") && turretInRange) {
                     gate.set(globals.gate.open);
                     if (Objects.equals(robotLocation, "Far Zone")) {
                         intake.set(.7);
@@ -295,7 +294,9 @@ public class Red extends OpMode {
                 double accelAngle = Math.toRadians(Math.floor(Math.toDegrees(follower.getAcceleration().getTheta())));
                 Vector accel = new Vector(accelMag, accelAngle); // calculate acceleration rounded to nearest inch/s, nearest degree (in inch/s^2, rad)
 
-                Vector velocity = follower.getVelocity().plus(new Vector(accel.getMagnitude() * globals.launcher.velTime, accel.getTheta())); // create a velocity vector by using v = u + at
+                Vector velocity = follower.getVelocity().plus(
+                        new Vector(accel.getMagnitude()
+                                * globals.launcher.velTime, accel.getTheta())); // create a velocity vector by using v = u + at
 
                 double distanceDiff = velocity.getMagnitude() * (0.0025 * dist + 0.3871);
                 Vector robotVelocity = new Vector(distanceDiff, velocity.getTheta());
@@ -318,7 +319,7 @@ public class Red extends OpMode {
         }
 
         if ((robotZone.isInside(closeLaunchZone) || robotZone.isInside(farLaunchZone)) && !zapLeon ) {
-            gamepad1.rumble(0.2, 0.2, 200);
+            gamepad1.rumble(0.6, 0.6, 400);
 
             zapLeon = true;
         }
@@ -342,21 +343,32 @@ public class Red extends OpMode {
             hoodAngle = 211.5;
             robotLocation = "Far Zone";
         } else {
-            targetRPM = 3000;
+            targetRPM = (13.09 * dist + 2164.9) * 1.01;
             robotLocation = "No Zone";
         }
 
         if (Math.abs(turretAng) > 120) {
             turretAng = 0;
+            turretInRange = false;
+        } else  {
+            turretInRange = true;
         }
 
         double turretTarget = degresToTicks((turretAng * 3)) + turretZeroOffset;
         turretPIDF.setSetPoint(turretTarget);
-        telemetry.addData("ftrer", turretTarget);
+
 
         if (g2.getButton(GamepadKeys.Button.OPTIONS) && !prevOptions2) {
             autoAim = !autoAim;
         }
+
+        if (g1.getButton(GamepadKeys.Button.RIGHT_BUMPER) && !rightBumper) {
+            turretZeroOffset += 250;
+        } else if (g1.getButton(GamepadKeys.Button.LEFT_BUMPER) && !leftBumper) {
+            turretZeroOffset -= 250;
+        }
+        rightBumper = g1.getButton(GamepadKeys.Button.RIGHT_BUMPER);
+        leftBumper = g1.getButton(GamepadKeys.Button.LEFT_BUMPER);
         prevOptions2 = g2.getButton(GamepadKeys.Button.OPTIONS);
 
 
@@ -366,7 +378,6 @@ public class Red extends OpMode {
             } else {
                 turretPIDF.setP(globals.turret.pClose);
             }
-            telemetry.addData("err", Math.abs(turretPIDF.getPositionError()));
             turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
             if (!turretPIDF.atSetPoint()) {
                 t1.set(setTurret(turretPower));
@@ -377,8 +388,19 @@ public class Red extends OpMode {
             }
             turretPos = intake.getCurrentPosition();
         } else {
-            turretPos -=  200* (g2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) - g2.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER));
-            turretPIDF.setSetPoint(MathFunctions.clamp(turretPos, -8000, 8000));
+            turretInRange = true;
+            if (Math.abs(turretPIDF.getPositionError()) > 1000) {
+                turretPIDF.setP(globals.turret.pFar);
+            } else {
+                turretPIDF.setP(globals.turret.pClose);
+            }
+            turretPos +=  400* (g2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) - g2.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER));
+            turretPIDF.setSetPoint(MathFunctions.clamp(turretPos, -6000 + turretZeroOffset, 6000 + turretZeroOffset));
+            if (Math.abs(turretPIDF.getPositionError()) > 1000) {
+                turretPIDF.setP(globals.turret.pFar);
+            } else {
+                turretPIDF.setP(globals.turret.pClose);
+            }
             turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
             t1.set(setTurret(turretPower));
             t2.set(setTurret(turretPower));
@@ -410,10 +432,33 @@ public class Red extends OpMode {
             leftY = 0;
         }
 
-        if (g1.getButton(GamepadKeys.Button.DPAD_UP )) {
+        if (g1.getButton(GamepadKeys.Button.SQUARE)) {
             //follower.setStartingPose(new Pose(136, 8, Math.toRadians(90)));
-            follower.setPose(new Pose(144 - 14.731707317073187, 79.64878048780488, Math.PI/2));
+            follower.setHeading(Math.PI/2);
         }
+
+        if (g1.getButton(GamepadKeys.Button.CIRCLE)) {
+            follower.setPose(new Pose(144-16, 80, Math.toRadians(90)));
+        }
+
+        if (g1.getButton(GamepadKeys.Button.DPAD_UP)) {
+            follower.setY(135);
+
+        }
+
+        if (g1.getButton(GamepadKeys.Button.DPAD_LEFT)) {
+            follower.setX(8.5);
+
+        }
+        if (g1.getButton(GamepadKeys.Button.DPAD_DOWN)) {
+            follower.setY(9);
+
+        }
+        if (g1.getButton(GamepadKeys.Button.DPAD_RIGHT)) {
+            follower.setX(135);
+        }
+
+
 
         if (g1.getButton(GamepadKeys.Button.CROSS) && !prevCross1) {
             slowDrive = !slowDrive;
@@ -425,7 +470,7 @@ public class Red extends OpMode {
             follower.setMaxPower(0.9);
         }
 
-        follower.setTeleOpDrive(leftY, -leftX, g1.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) - g1.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER), true);
+        follower.setTeleOpDrive(leftY, -leftX, 0.75 * (g1.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) - g1.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER)), false);
 
     }
 
@@ -475,7 +520,6 @@ public class Red extends OpMode {
         Pose odo = follower.getPose();
         if (odo == null) return;
 
-
         odoPose = odo;
 
         // Prediction
@@ -483,6 +527,8 @@ public class Red extends OpMode {
         double pXPred = pX + globals.kalman.qX;
         double pYPred = pY + globals.kalman.qY;
         double pHPred = pH + globals.qH;
+
+
 
         // no measurement = keep position
         xEst = xPred; yEst = yPred; hEst = hPred;
@@ -492,7 +538,11 @@ public class Red extends OpMode {
         if (r != null && r.isValid()) {
             Pose3D bot = r.getBotpose();
             if (bot != null) {
-                relocReady = follower.getVelocity().getMagnitude() < 2;
+                if (follower.getVelocity().getMagnitude() < 6) {
+                    relocReady = true;
+                } else {
+                    relocReady = false;
+                }
                 double zX = 72 + (bot.getPosition().y * M_TO_IN);
                 double zY = 72 - (bot.getPosition().x * M_TO_IN);
                 zH = bot.getOrientation().getYaw(AngleUnit.RADIANS);
@@ -503,11 +553,7 @@ public class Red extends OpMode {
                 double headingError = zH - hPred;
                 while (headingError > Math.PI) headingError -= 2.0 * Math.PI;
                 while (headingError < -Math.PI) headingError += 2.0 * Math.PI;
-
-                double midpointH = 0.15;   // radians (~8.5°)
-                double steepnessH = 15.0;
-                double kH = 1.0 / (1.0 + Math.exp(-steepnessH * (Math.abs(headingError) - midpointH)));
-
+                double kH = pHPred / (pHPred + globals.rH);
                 hEst = hPred + kH * headingError;
                 while (hEst > Math.PI) hEst -= 2.0 * Math.PI;
                 while (hEst < -Math.PI) hEst += 2.0 * Math.PI;
@@ -515,14 +561,8 @@ public class Red extends OpMode {
 
 
 
-                double errorMag = Math.sqrt(Math.pow(zX - xPred, 2) + Math.pow(zY - yPred, 2));
-                double midpoint = 6.0;
-                double steepness = 0.8;
-                double kX = 1.0 / (1.0 + Math.exp(-steepness * (errorMag - midpoint)));
-                double kY = kX;
-
-                xEst = xPred + kX * (zX - xPred);
-                yEst = yPred + kY * (zY - yPred);
+                double kX = pXPred / (pXPred + globals.kalman.rX);
+                double kY = pYPred / (pYPred + globals.kalman.rY);
 
                 xEst = xPred + kX * (zX - xPred);
                 yEst = yPred + kY * (zY - yPred);
@@ -530,13 +570,14 @@ public class Red extends OpMode {
                 pX = (1.0 - kX) * pXPred;
                 pY = (1.0 - kY) * pYPred;
             }
+
         } else {
             relocReady = false;
         }
         fusedPose = new Pose(xEst, yEst, hEst);
-        if ((relocReady && relocTimer.seconds() > 10) || g2.getButton(GamepadKeys.Button.RIGHT_BUMPER))  {
-            follower.setPose(fusedPose);
-            relocTimer.reset();
+        if (relocReady && g2.getButton(GamepadKeys.Button.DPAD_DOWN))  {
+            follower.setX(fusedPose.getX());
+            follower.setY(fusedPose.getY());
             gamepad2.rumble(0.3, 0.3, 200);
         }
 
