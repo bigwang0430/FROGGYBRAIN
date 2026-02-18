@@ -51,7 +51,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
     private boolean scheduled = false;
     private SequentialCommandGroup froggyroute;
     private int shootnum = 0;
-    public PathChain Path1, Path2, Path3, Path4, Path5, Path6, Path7, Path8, Path9, Path10, Path11, Path12, Path13, Path14, Path15;
+    public PathChain Path1, Path2, Path3, Path4, Path5, Path6, Path7, Path8, Path9, Path10, Path11, Path12, Path13, Path14;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
