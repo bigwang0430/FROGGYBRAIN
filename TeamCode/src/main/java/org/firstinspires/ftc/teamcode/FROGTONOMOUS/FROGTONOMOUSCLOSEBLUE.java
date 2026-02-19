@@ -61,11 +61,11 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
     public void buildpath(){
         Path1 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(21.800, 124.900),
+                                new Pose(28.500, 128.000),
 
                                 new Pose(47.063, 83.590)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(144), Math.toRadians(180))
+                ).setConstantHeadingInterpolation(Math.toRadians(180))
 
                 .build();
 
@@ -220,7 +220,7 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
             t2 = new CRServoEx(hardwareMap, "t2");
             t2.setInverted(true);
             t1.setInverted(true);
-            turretPIDF.setTolerance(67);
+            turretPIDF.setTolerance(100);
             t1.set(0.01);
             t2.set(0.01);
 
@@ -320,7 +320,7 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
                 }
                 telemetry.addData("err", Math.abs(turretPIDF.getPositionError()));
                 turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
-                if (!turretPIDF.atSetPoint() && robotZone.isInside(closeLaunchZone)) {
+                if (!turretPIDF.atSetPoint()) {//ting about robotzone
                     t1.set(setTurret(turretPower));
                     t2.set(setTurret(turretPower));
                 } else {
@@ -359,7 +359,7 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
                 l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
             }
 
-            if (launchPIDF.atSetPoint() && robotZone.isInside(closeLaunchZone) && !follower.isBusy()) {
+            if (launchPIDF.atSetPoint() && robotZone.isInside(closeLaunchZone) && !follower.isBusy() && turretPIDF.atSetPoint()) {
                 gate.set(globals.gate.open);
                 intake.set(1);
                 transfer.set(1);
@@ -661,7 +661,7 @@ public class FROGTONOMOUSCLOSEBLUE extends CommandOpMode {
         }
 
         follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(new Pose(21.8, 124.9, Math.toRadians(144)));//todo
+        follower.setStartingPose(new Pose(28.5, 128, Math.toRadians(180)));//todo
 
         buildpath();
 

@@ -164,7 +164,7 @@ public class FROGTONOMOUSFARBLUE extends CommandOpMode {
             t2 = new CRServoEx(hardwareMap, "t2");
             t2.setInverted(true);
             t1.setInverted(true);
-            turretPIDF.setTolerance(60);
+            turretPIDF.setTolerance(100);
             t1.set(0.01);
             t2.set(0.01);
 

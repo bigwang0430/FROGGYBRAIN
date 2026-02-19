@@ -48,6 +48,7 @@ public class FROGTONOMOUSFARREDPMSS extends CommandOpMode {
     private ElapsedTime timer = new ElapsedTime();
     private boolean scheduled = false;
     private SequentialCommandGroup froggyroute;
+    private int shootnum = 0;
     public PathChain Path1, Path2, Path3, Path4, Path5, Path6, Path7, Path8, Path9, Path10;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -176,7 +177,7 @@ public class FROGTONOMOUSFARREDPMSS extends CommandOpMode {
             t2 = new CRServoEx(hardwareMap, "t2");
             t2.setInverted(true);
             t1.setInverted(true);
-            turretPIDF.setTolerance(67);
+            turretPIDF.setTolerance(100);
             t1.set(0.01);
             t2.set(0.01);
 
@@ -224,7 +225,7 @@ public class FROGTONOMOUSFARREDPMSS extends CommandOpMode {
             double x = follower.getPose().getX();
             double y = follower.getPose().getY();
             Pose robot = new Pose(x, y);
-            Pose goal = new Pose(144 - globals.turret.goalX, globals.turret.goalY);
+            Pose goal = new Pose(142 - globals.turret.goalX, globals.turret.goalY);
             robotZone.setPosition(x, y);
             robotZone.setRotation(follower.getPose().getHeading());
 
@@ -260,7 +261,11 @@ public class FROGTONOMOUSFARREDPMSS extends CommandOpMode {
             }
         }
         public void intakedone(){
-            intake.set(0);
+            if (shootnum ==1){
+                intake.set(1);
+            } else {
+                intake.set(0);
+            }
         }
         private double setTurret(double power) {
             return Math.signum(power) * (Math.abs(power) + globals.turret.ks);
@@ -298,7 +303,7 @@ public class FROGTONOMOUSFARREDPMSS extends CommandOpMode {
                 l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
             }
 
-            if (launchPIDF.atSetPoint() && robotZone.isInside(farLaunchZone) && !follower.isBusy()) {
+            if (launchPIDF.atSetPoint() && robotZone.isInside(farLaunchZone) && !follower.isBusy() && turretPIDF.atSetPoint()) {
                 boolean RPMdip = previousRPM - RPM > 80;
                 if (RPMdip && !dip1) {
                     ballsLaunched++;
@@ -330,6 +335,7 @@ public class FROGTONOMOUSFARREDPMSS extends CommandOpMode {
             dip1 = false;
             dip2 = false;
             ballsLaunched = 0;
+            shootnum++;
         }
 
         @Override

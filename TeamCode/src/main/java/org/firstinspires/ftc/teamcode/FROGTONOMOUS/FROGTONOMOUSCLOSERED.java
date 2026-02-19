@@ -60,11 +60,11 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
     public void buildpath(){
         Path1 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(21.800, 124.900).mirror(),
+                                new Pose(28.500, 128.00).mirror(),
 
                                 new Pose(47.063, 83.590).mirror()
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(36), Math.toRadians(0))
+                ).setConstantHeadingInterpolation(Math.toRadians(0))
 
                 .build();
 
@@ -219,7 +219,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
             t2 = new CRServoEx(hardwareMap, "t2");
             t2.setInverted(true);
             t1.setInverted(true);
-            turretPIDF.setTolerance(67);
+            turretPIDF.setTolerance(100);
             t1.set(0.01);
             t2.set(0.01);
 
@@ -277,7 +277,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
             double x = follower.getPose().getX();
             double y = follower.getPose().getY();
             Pose robot = new Pose(x, y);
-            Pose goal = new Pose(144 - globals.turret.goalX, globals.turret.goalY);
+            Pose goal = new Pose(142 - globals.turret.goalX, globals.turret.goalY);
             robotZone.setPosition(x, y);
             robotZone.setRotation(follower.getPose().getHeading());
 
@@ -319,7 +319,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
             }
             telemetry.addData("err", Math.abs(turretPIDF.getPositionError()));
             turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
-            if (!turretPIDF.atSetPoint() && robotZone.isInside(closeLaunchZone)) {
+            if (!turretPIDF.atSetPoint()) {//robotzone inside
                 t1.set(setTurret(turretPower));
                 t2.set(setTurret(turretPower));
             } else {
@@ -358,7 +358,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
                 l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
             }
 
-            if (launchPIDF.atSetPoint() && robotZone.isInside(closeLaunchZone) && !follower.isBusy()) {
+            if (launchPIDF.atSetPoint() && robotZone.isInside(closeLaunchZone) && !follower.isBusy() && turretPIDF.atSetPoint()) {
                 gate.set(globals.gate.open);
                 intake.set(1);
                 transfer.set(1);
@@ -660,7 +660,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
         }
 
         follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(new Pose(21.8, 124.9, Math.toRadians(144)).mirror());//todo
+        follower.setStartingPose(new Pose(28.5, 128, Math.toRadians(180)).mirror());//todo
 
         buildpath();
 

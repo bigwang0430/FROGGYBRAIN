@@ -106,7 +106,7 @@ public class Red extends OpMode {
         t1.setInverted(true);
         turretEncoder = hardwareMap.get(AnalogInput.class, "turretEncoder");
 
-        turretPIDF.setTolerance(67);
+        turretPIDF.setTolerance(100);
         t1.set(0.001);
         t2.set(0.001);
         l1 = new Motor(hardwareMap, "l1", 28, 6000);
@@ -212,28 +212,13 @@ public class Red extends OpMode {
     }
 
     private void launch() {
-        launchPIDF.setSetPoint(targetRPM);
+
 
         launchPIDF.setPID(globals.launcher.p, globals.launcher.i, globals.launcher.d);
         if (g2.getButton(GamepadKeys.Button.CROSS)) {
-
-
-            launchPower = launchPIDF.calculate(RPM);
-            if (RPM < 400) {
-                l1.set(0.65);
-                l2.set(0.65);
-            } else {
-                l1.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
-                l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
-            }
-            hood.set(MathFunctions.clamp(hoodAngle, 40, 211.5));
-
-
-        }
-        if (g2.getButton(GamepadKeys.Button.TRIANGLE) || g1.getButton(GamepadKeys.Button.TRIANGLE)) {
-            currentLaunchState = launchState.intaking;
-        } else if (g2.getButton(GamepadKeys.Button.DPAD_UP) && launchPIDF.atSetPoint()) {
             currentLaunchState = launchState.launching;
+        } else if (g2.getButton(GamepadKeys.Button.TRIANGLE) || g1.getButton(GamepadKeys.Button.TRIANGLE)) {
+            currentLaunchState = launchState.intaking;
         } else {
             currentLaunchState = launchState.idle;
         }
@@ -241,6 +226,9 @@ public class Red extends OpMode {
         switch (currentLaunchState) {
 
             case idle:
+                ballsLaunched = 0;
+                dip1 = false;
+                dip2 = true;
                 l1.set(0);
                 l2.set(0);
                 intake.set(0);
@@ -249,7 +237,23 @@ public class Red extends OpMode {
                 break;
 
             case launching:
-                if (launchPIDF.atSetPoint() && !robotLocation.equals("No Zone") && turretInRange) {
+
+                launchPIDF.setSetPoint(targetRPM);
+                launchPower = launchPIDF.calculate(RPM);
+                if (RPM < 400) {
+                    l1.set(0.5);
+                    l2.set(0.5);
+                } else {
+                    l1.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
+                    l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
+                }
+
+                hood.set(MathFunctions.clamp(hoodAngle, 40, 211.5));
+                if ((g2.getButton(GamepadKeys.Button.TRIANGLE) || g1.getButton(GamepadKeys.Button.TRIANGLE)) && !launchPIDF.atSetPoint()) {
+                    intake.set(1.0);
+                    transfer.set(0.5);
+                    gate.set(globals.gate.close);
+                } else if (launchPIDF.atSetPoint() && !robotLocation.equals("No Zone") && turretInRange && turretPIDF.atSetPoint()) {
                     gate.set(globals.gate.open);
                     if (Objects.equals(robotLocation, "Far Zone")) {
                         intake.set(.7);
@@ -279,7 +283,7 @@ public class Red extends OpMode {
         Pose robot = new Pose(x, y);
         robotZone.setPosition(x, y);
         robotZone.setRotation(follower.getPose().getHeading());
-        Pose goal = new Pose(144 - globals.turret.goalX, globals.turret.goalY);
+        Pose goal = new Pose(142 - globals.turret.goalX, globals.turret.goalY);
         if (follower.getVelocity().getMagnitude() < 6 ) {
             currentLaunchMode = launchMode.normal;
         } else {
@@ -358,18 +362,18 @@ public class Red extends OpMode {
         turretPIDF.setSetPoint(turretTarget);
 
 
-        if (g2.getButton(GamepadKeys.Button.OPTIONS) && !prevOptions2) {
+        if (g2.getButton(GamepadKeys.Button.DPAD_LEFT) && !prevOptions2) {
             autoAim = !autoAim;
         }
 
-        if (g1.getButton(GamepadKeys.Button.RIGHT_BUMPER) && !rightBumper) {
-            turretZeroOffset += 250;
-        } else if (g1.getButton(GamepadKeys.Button.LEFT_BUMPER) && !leftBumper) {
-            turretZeroOffset -= 250;
+        if (g2.getButton(GamepadKeys.Button.RIGHT_BUMPER) && !rightBumper) {
+            turretZeroOffset += 150;
+        } else if (g2.getButton(GamepadKeys.Button.LEFT_BUMPER) && !leftBumper) {
+            turretZeroOffset -= 150;
         }
-        rightBumper = g1.getButton(GamepadKeys.Button.RIGHT_BUMPER);
-        leftBumper = g1.getButton(GamepadKeys.Button.LEFT_BUMPER);
-        prevOptions2 = g2.getButton(GamepadKeys.Button.OPTIONS);
+        rightBumper = g2.getButton(GamepadKeys.Button.RIGHT_BUMPER);
+        leftBumper = g2.getButton(GamepadKeys.Button.LEFT_BUMPER);
+        prevOptions2 = g2.getButton(GamepadKeys.Button.DPAD_LEFT);
 
 
         if (autoAim) {
@@ -432,30 +436,23 @@ public class Red extends OpMode {
             leftY = 0;
         }
 
-        if (g1.getButton(GamepadKeys.Button.SQUARE)) {
-            //follower.setStartingPose(new Pose(136, 8, Math.toRadians(90)));
-            follower.setHeading(Math.PI/2);
-        }
-
-        if (g1.getButton(GamepadKeys.Button.CIRCLE)) {
-            follower.setPose(new Pose(144-16, 80, Math.toRadians(90)));
-        }
-
         if (g1.getButton(GamepadKeys.Button.DPAD_UP)) {
-            follower.setY(135);
 
+            follower.setPose(new Pose(144 - 8.5, 9, Math.toRadians(0)));
         }
 
-        if (g1.getButton(GamepadKeys.Button.DPAD_LEFT)) {
-            follower.setX(8.5);
+        if (g1.getButton(GamepadKeys.Button.DPAD_RIGHT)) {
+            follower.setPose(new Pose(72, 9, Math.toRadians(90)));
 
         }
         if (g1.getButton(GamepadKeys.Button.DPAD_DOWN)) {
-            follower.setY(9);
+
+            follower.setPose(new Pose(144-135, 9, Math.toRadians(180)));
 
         }
-        if (g1.getButton(GamepadKeys.Button.DPAD_RIGHT)) {
-            follower.setX(135);
+        if (g1.getButton(GamepadKeys.Button.DPAD_LEFT)) {
+            follower.setPose(new Pose(144-15, 79, Math.toRadians(90)));
+
         }
 
 
@@ -470,7 +467,7 @@ public class Red extends OpMode {
             follower.setMaxPower(0.9);
         }
 
-        follower.setTeleOpDrive(leftY, -leftX, 0.75 * (g1.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) - g1.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER)), false);
+        follower.setTeleOpDrive(leftY, -leftX, 0.75 * (g1.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) - g1.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER)), true);
 
     }
 
