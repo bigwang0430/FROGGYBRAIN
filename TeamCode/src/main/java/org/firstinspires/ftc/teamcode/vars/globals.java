@@ -42,16 +42,16 @@ public class globals {
 
     @Config
     public static class turret {
-        public static float turretOffset = -75F;
-        public static float goalY = 138;
-        public static float goalX = 4;
+        public static float turretOffset = 0F;
+        public static float goalY = 142;
+        public static float goalX = 6;
 
-        public static float pFar = 0.00006F;
+        public static float pFar = 0.00006F; //0.000035
         public static float i = 0F;
-        public static float d = 0.00000025F;
-        public static float ks = 0.1F;
+        public static float d = 0.00000025F; // 0.00000065
+        public static float ks = 0.086F;
 
-        public static float pClose = 0.000007F;
+        public static float pClose = 0.000006F; //0.0000035
 
 
         public static float turretTarget = 0F;

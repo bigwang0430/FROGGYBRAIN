@@ -47,10 +47,8 @@ import java.util.List;
 public class FROGTONOMOUSCLOSERED extends CommandOpMode {
     private Follower follower;
     TelemetryData telemetryData = new TelemetryData(telemetry);
-    private ElapsedTime timer, looptimer = new ElapsedTime();
     private boolean scheduled = false;
     private SequentialCommandGroup froggyroute;
-    private int shootnum = 0;
     public PathChain Path1, Path2, Path3, Path4, Path5, Path6, Path7, Path8, Path9, Path10, Path11, Path12, Path13, Path14;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -60,7 +58,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
     public void buildpath(){
         Path1 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(28.500, 128.00).mirror(),
+                                new Pose(28.500, 127.00).mirror(),
 
                                 new Pose(47.063, 83.590).mirror()
                         )
@@ -152,7 +150,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
                         new BezierLine(
                                 new Pose(42.500, 84.000).mirror(),
 
-                                new Pose(25.000, 84.000).mirror()
+                                new Pose(23.000, 84.000).mirror()
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(0))
 
@@ -160,7 +158,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
 
         Path11 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(17.000, 84.000).mirror(),
+                                new Pose(23.000, 84.000).mirror(),
 
                                 new Pose(45.000, 84.000).mirror()
                         )
@@ -192,7 +190,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
                         new BezierLine(
                                 new Pose(23.000, 35.500).mirror(),
 
-                                new Pose(58.000, 104.000).mirror()
+                                new Pose(57.000, 104.000).mirror()
                         )
                 ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(33))
 
@@ -206,12 +204,10 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
         private CRServo t1, t2;
         private double dist, turretAng = 0, targetRPM, hoodAngle, RPM, lastTime, lastPosition, previousRPM, launchPower, turretPower, turretPos;
         private PIDController turretPIDF = new PIDController(globals.turret.pFar, globals.turret.i, globals.turret.d);
-        private int ballsLaunched = 0;
         private MotorEx l1, l2, intake, transfer;
         private PIDController launchPIDF = new PIDController(globals.launcher.p, globals.launcher.i, globals.launcher.d);
         private final PolygonZone closeLaunchZone = new PolygonZone(new Point(144, 144), new Point(72, 72), new Point(0, 144));
         private final PolygonZone robotZone = new PolygonZone(18, 18);
-        private boolean dip1 = false, dip2 = false;
         private AnalogInput turretEncoder;
         private double turretZeroOffset;
         public everythingsubsys(HardwareMap hardwareMap){
@@ -280,11 +276,6 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
             Pose goal = new Pose(142 - globals.turret.goalX, globals.turret.goalY);
             robotZone.setPosition(x, y);
             robotZone.setRotation(follower.getPose().getHeading());
-
-            if (shootnum == 4) {
-                goal = new Pose(0, 134);
-            }
-
 
             Pose target = goal.minus(robot);
             Vector robotToGoal = target.getAsVector();
@@ -362,16 +353,6 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
                 gate.set(globals.gate.open);
                 intake.set(1);
                 transfer.set(1);
-
-                boolean RPMdip = previousRPM - RPM > 100;
-                if (RPMdip && !dip1) {
-                    ballsLaunched++;
-                    dip1 = true;
-                    dip2 = false;
-                } else if (RPMdip && !dip2 && dip1) {
-                    ballsLaunched++;
-                    dip2 = true;
-                }
             }
             hood.set(MathFunctions.clamp(hoodAngle, 40, 211.5));
 
@@ -381,180 +362,12 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
             l2.set(0.2);
             intake.set(0);
             transfer.set(0);
-            dip1 = false;
-            dip2 = false;
-            ballsLaunched = 0;
-            shootnum++;
         }
 
         @Override
         public void periodic(){
             RPM();
             launchcalc();
-        }
-    }
-
-    public class visionsubsys extends SubsystemBase {
-        private Limelight3A limelight;
-        private double numspeed = 0.4;
-        private Motor fl, bl, fr, br;
-        public boolean hunted;
-        private int alignedticks = 0;
-        private double xEst = 0, yEst = 0, hEst = 0;   // odometry estimate
-        private double pX = globals.kalman.pX0, pY = globals.kalman.pY0, pH = globals.pHg; // odometry error
-        private static final double M_TO_IN = 39.37007874015748;
-        private Pose fusedPose = new Pose(0, 0, 0);
-        private Pose odoPose = new Pose(0, 0, 0);
-        private double zH=0.0;
-        private boolean relocalized = false;
-
-        public visionsubsys(HardwareMap hardwareMap){
-            limelight = hardwareMap.get(Limelight3A.class, "limelight");
-            limelight.setPollRateHz(50);
-            limelight.start();
-
-            FtcDashboard.getInstance().startCameraStream(limelight, 30);
-
-            fl = new Motor(hardwareMap, "fl");
-            fl.setInverted(true);
-            fl.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-            fl.setRunMode(Motor.RunMode.RawPower);
-
-            bl = new Motor(hardwareMap, "bl");
-            bl.setInverted(true);
-            bl.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-            bl.setRunMode(Motor.RunMode.RawPower);
-
-            fr = new Motor(hardwareMap, "fr");
-            fr.setInverted(false);
-            fr.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-            fr.setRunMode(Motor.RunMode.RawPower);
-
-            br = new Motor(hardwareMap, "br");
-            br.setInverted(false);
-            br.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
-            br.setRunMode(Motor.RunMode.RawPower);
-
-        }
-
-        public void pipeline(int num){
-            limelight.pipelineSwitch(num);
-        }
-        public void relocalize() {
-            Pose odo = follower.getPose();
-            if (odo == null) return;
-
-            odoPose = odo;
-
-            // Prediction
-            double xPred = odo.getX(), yPred = odo.getY(), hPred = odo.getHeading();
-            double pXPred = pX + globals.kalman.qX;
-            double pYPred = pY + globals.kalman.qY;
-            double pHPred = pH + globals.qH;
-
-            // no measurement = keep position
-            xEst = xPred; yEst = yPred; hEst = hPred;
-            pX = pXPred; pY = pYPred; pH = pHPred;
-
-            LLResult r = limelight.getLatestResult();
-            if (r != null && r.isValid()) {
-                Pose3D bot = r.getBotpose();
-                if (bot != null) {
-                    double zX = 72 + (bot.getPosition().y * M_TO_IN);
-                    double zY = 72 - (bot.getPosition().x * M_TO_IN);
-                    zH = bot.getOrientation().getYaw(AngleUnit.RADIANS);
-                    zH-=Math.PI;
-                    zH += Math.PI / 2.0 ;
-                    zH = zH % (2.0 * Math.PI);
-                    if (zH < 0) zH += 2.0 * Math.PI;
-                    double headingError = zH - hPred;
-                    while (headingError > Math.PI) headingError -= 2.0 * Math.PI;
-                    while (headingError < -Math.PI) headingError += 2.0 * Math.PI;
-
-                    double midpointH = 0.15;   // radians (~8.5°)
-                    double steepnessH = 15.0;
-                    double kH = 1.0 / (1.0 + Math.exp(-steepnessH * (Math.abs(headingError) - midpointH)));
-
-                    hEst = hPred + kH * headingError;
-                    while (hEst > Math.PI) hEst -= 2.0 * Math.PI;
-                    while (hEst < -Math.PI) hEst += 2.0 * Math.PI;
-                    pH = (1.0 - kH) * pHPred;
-
-
-
-                    double errorMag = Math.sqrt(Math.pow(zX - xPred, 2) + Math.pow(zY - yPred, 2));
-                    double midpoint = 6.0;
-                    double steepness = 0.8;
-                    double kX = 1.0 / (1.0 + Math.exp(-steepness * (errorMag - midpoint)));
-                    double kY = kX;
-
-                    xEst = xPred + kX * (zX - xPred);
-                    yEst = yPred + kY * (zY - yPred);
-
-                    xEst = xPred + kX * (zX - xPred);
-                    yEst = yPred + kY * (zY - yPred);
-
-                    pX = (1.0 - kX) * pXPred;
-                    pY = (1.0 - kY) * pYPred;
-
-                    fusedPose = new Pose(xEst, yEst, hEst);
-
-                    follower.setPose(fusedPose);
-                    follower.update();
-
-                    relocalized = true;
-                }
-            }
-        }
-        public boolean relocalizedone(){
-            if (relocalized){
-                return true;
-            }
-            return false;
-        }
-
-        public void balltracking() {
-            pipeline(2);
-            LLResult result = limelight.getLatestResult();
-            if (result == null || !result.isValid() || result.getStaleness() >= 500) {
-                strafe(0);
-                return;
-            }
-
-            List<LLResultTypes.ColorResult> balls = result.getColorResults();
-            if (balls == null || balls.isEmpty()) {
-                strafe(0);
-                return;
-            }
-
-            LLResultTypes.ColorResult ball = balls.get(0);
-            double txPx = ball.getTargetXPixels();
-
-            if (txPx < 130 && txPx > 110) {
-                strafe(0);
-                alignedticks++;
-                if (alignedticks >= 5) {
-                    hunted = true;
-                }
-            } else {
-                alignedticks = 0;
-                if (txPx > 130) strafe(+1);
-                else if (txPx < 110) strafe(-1);
-            }
-        }
-
-        public void strafe(int num) {
-            fl.set(num*numspeed);
-            fr.set(-num*numspeed);
-            bl.set(-num*numspeed);
-            br.set(num*numspeed);
-        }
-
-        public boolean done() {
-            if (hunted){
-                return  true;
-            }
-            return false;
         }
     }
 
@@ -581,67 +394,21 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
     public static class froggyeat extends  CommandBase {
         private final everythingsubsys everythingsubsystem;
 
-        public froggyeat(everythingsubsys everythingsubsystem){
+        public froggyeat(everythingsubsys everythingsubsystem) {
             this.everythingsubsystem = everythingsubsystem;
             addRequirements(everythingsubsystem);
         }
 
         @Override
-        public void initialize(){
+        public void initialize() {
             everythingsubsystem.intaking();
         }
 
         @Override
-        public void end(boolean interrupted){
+        public void end(boolean interrupted) {
             everythingsubsystem.intakedone();
         }
 
-    }
-    public static class froggyhunting extends CommandBase {
-        private final visionsubsys visionsubsystem;
-
-        public froggyhunting(visionsubsys visionsubsystem){
-            this.visionsubsystem = visionsubsystem;
-            addRequirements(visionsubsystem);
-        }
-
-        @Override
-        public void initialize(){
-            visionsubsystem.pipeline(2);
-        }
-
-        @Override
-        public void execute() {
-            visionsubsystem.balltracking();
-        }
-
-        @Override
-        public boolean isFinished(){
-            return visionsubsystem.done();
-        }
-    }
-    public static class froggyaim extends CommandBase {
-        private final visionsubsys visionsubsystem;
-
-        public froggyaim(visionsubsys visionsubsystem){
-            this.visionsubsystem = visionsubsystem;
-            addRequirements(visionsubsystem);
-        }
-
-        @Override
-        public void initialize(){
-            visionsubsystem.pipeline(0);
-        }
-
-        @Override
-        public void execute(){
-            visionsubsystem.relocalize();
-        }
-
-        @Override
-        public boolean isFinished(){
-            return visionsubsystem.relocalizedone();
-        }
     }
 
 
@@ -649,7 +416,6 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
 
     @Override
     public void initialize() {
-        visionsubsys visionsubsystem = new visionsubsys(hardwareMap);
         everythingsubsys everythingsubsystem = new everythingsubsys(hardwareMap);
 
         GoBildaPinpointDriver pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
@@ -660,7 +426,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
         }
 
         follower = Constants.createFollower(hardwareMap);
-        follower.setStartingPose(new Pose(28.5, 128, Math.toRadians(180)).mirror());//todo
+        follower.setStartingPose(new Pose(28.5, 127, Math.toRadians(180)).mirror());//todo
 
         buildpath();
 
@@ -669,13 +435,9 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
 
         froggyroute = new SequentialCommandGroup(
                 new ParallelDeadlineGroup(
-                        new WaitCommand(2500),
+                        new WaitCommand(2800),
                         new froggylaunch(everythingsubsystem),
                         new FollowPathCommand(follower, Path1)
-                ),
-                new ParallelDeadlineGroup(
-                        new WaitCommand(500),
-                        new froggyaim(visionsubsystem)
                 ),
                 new FollowPathCommand(follower, Path2),
                 new ParallelDeadlineGroup(
@@ -696,7 +458,7 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(2800),
+                        new WaitCommand(3000),
                         new froggylaunch(everythingsubsystem),
                         new FollowPathCommand(follower, Path6)
                 ),
@@ -705,11 +467,11 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(1000),
+                        new WaitCommand(1500),
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(2800),
+                        new WaitCommand(3000),
                         new froggylaunch(everythingsubsystem),
                         new FollowPathCommand(follower, Path8)
                 ),
@@ -750,13 +512,10 @@ public class FROGTONOMOUSCLOSERED extends CommandOpMode {
 
         super.run();
         follower.update();
-        telemetryData.addData("loop time", looptimer.seconds());
         telemetryData.addData("X", follower.getPose().getX());
         telemetryData.addData("Y", follower.getPose().getY());
         telemetryData.addData("Heading", follower.getPose().getHeading());
         telemetryData.update();
-        looptimer.reset();
-
     }
 }
 

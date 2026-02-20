@@ -213,7 +213,7 @@ public class FROGTONOMOUSFARREDPMSS extends CommandOpMode {
             turretEncoder = hardwareMap.get(AnalogInput.class, "turretEncoder");
             telemetryData.addData("voltage", turretEncoder.getVoltage());
             turretZeroOffset =  degresToTicks(voltageToDegrees(turretEncoder.getVoltage() - 1.6)) * 2;
-
+            telemetryData.update();
         }
 
         public void intaking(){

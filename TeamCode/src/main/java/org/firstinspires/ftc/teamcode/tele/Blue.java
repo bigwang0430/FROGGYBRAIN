@@ -66,8 +66,8 @@ public class Blue extends OpMode {
     private double lastTime, launchPower, RPM, previousRPM, dist, turretAng, targetRPM, hoodAngle, leftY, leftX, turretPower;
     private double turretPos = 0F;
     private int lastPosition;
-    private boolean prevCross1, prevOptions2;
-    private boolean autoAim = true, dip1 = false, dip2 = true;
+    private boolean prevCross1, prevOptions2, prevTriggerR, prevTriggerL;
+    private boolean autoAim = true;
     private boolean slowDrive = false;
     private boolean turretZeroed = false, turretInRange;
     private int ballsLaunched = 0;
@@ -78,7 +78,6 @@ public class Blue extends OpMode {
             "", "#3F51B5", 1
     );
 
-    private Limelight3A limelight;
 
     private double xEst = 0, yEst = 0, hEst = 0;   // odometry estimate
     private double pX = globals.kalman.pX0, pY = globals.kalman.pY0, pH = globals.pHg; // odometry error
@@ -106,7 +105,7 @@ public class Blue extends OpMode {
         t1.setInverted(true);
         turretEncoder = hardwareMap.get(AnalogInput.class, "turretEncoder");
 
-        turretPIDF.setTolerance(100);
+        turretPIDF.setTolerance(75);
         t1.set(0.001);
         t2.set(0.001);
         l1 = new Motor(hardwareMap, "l1", 28, 6000);
@@ -153,11 +152,6 @@ public class Blue extends OpMode {
         timer.reset();
         timer.startTime();
 
-        limelight = hardwareMap.get(Limelight3A.class, "limelight");
-        limelight.setPollRateHz(50);
-        limelight.start();
-        limelight.pipelineSwitch(0);
-
         // Initialize estimate to odometry so don't start at 0,0,0
         Pose p = follower.getPose();
         if (p != null) {
@@ -183,7 +177,6 @@ public class Blue extends OpMode {
         drive();
         launch();
         drawRobot(follower.getPose(), robotLook);
-        updateKalman();
 
 
         telemetry();
@@ -227,8 +220,6 @@ public class Blue extends OpMode {
 
             case idle:
                 ballsLaunched = 0;
-                dip1 = false;
-                dip2 = true;
                 l1.set(0);
                 l2.set(0);
                 intake.set(0);
@@ -241,8 +232,8 @@ public class Blue extends OpMode {
                 launchPIDF.setSetPoint(targetRPM);
                 launchPower = launchPIDF.calculate(RPM);
                 if (RPM < 400) {
-                    l1.set(0.5);
-                    l2.set(0.5);
+                    l1.set(0.55);
+                    l2.set(0.55);
                 } else {
                     l1.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
                     l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
@@ -361,15 +352,28 @@ public class Blue extends OpMode {
             double turretTarget = degresToTicks((turretAng * 3)) + turretZeroOffset;
             turretPIDF.setSetPoint(turretTarget);
 
+            boolean rightTrigger = g2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.5;
+            boolean leftTrigger = g2.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.5;
+
 
             if (g2.getButton(GamepadKeys.Button.DPAD_LEFT) && !prevOptions2) {
                 autoAim = !autoAim;
             }
 
-            if (g2.getButton(GamepadKeys.Button.RIGHT_BUMPER) && !rightBumper) {
-                turretZeroOffset += 150;
-            } else if (g2.getButton(GamepadKeys.Button.LEFT_BUMPER) && !leftBumper) {
+            if (leftTrigger && !prevTriggerL) {
                 turretZeroOffset -= 150;
+            } else if (rightTrigger && !prevTriggerR) {
+                turretZeroOffset += 150;
+            }
+
+            prevTriggerL = leftTrigger;
+            prevTriggerR = rightTrigger;
+
+
+            if (g2.getButton(GamepadKeys.Button.RIGHT_BUMPER) && !rightBumper) {
+                turretZeroOffset += 75;
+            } else if (g2.getButton(GamepadKeys.Button.LEFT_BUMPER) && !leftBumper) {
+                turretZeroOffset -= 75;
             }
             rightBumper = g2.getButton(GamepadKeys.Button.RIGHT_BUMPER);
             leftBumper = g2.getButton(GamepadKeys.Button.LEFT_BUMPER);
@@ -512,78 +516,4 @@ public class Blue extends OpMode {
         panelsField.line(x2, y2);
         panelsField.update();
     }
-
-    public void updateKalman() {
-        Pose odo = follower.getPose();
-        if (odo == null) return;
-
-        odoPose = odo;
-
-        // Prediction
-        double xPred = odo.getX(), yPred = odo.getY(), hPred = odo.getHeading();
-        double pXPred = pX + globals.kalman.qX;
-        double pYPred = pY + globals.kalman.qY;
-        double pHPred = pH + globals.qH;
-
-
-
-        // no measurement = keep position
-        xEst = xPred; yEst = yPred; hEst = hPred;
-        pX = pXPred; pY = pYPred; pH = pHPred;
-
-        LLResult r = limelight.getLatestResult();
-        if (r != null && r.isValid()) {
-            Pose3D bot = r.getBotpose();
-            if (bot != null) {
-                if (follower.getVelocity().getMagnitude() < 6) {
-                    relocReady = true;
-                } else {
-                    relocReady = false;
-                }
-                double zX = 72 + (bot.getPosition().y * M_TO_IN);
-                double zY = 72 - (bot.getPosition().x * M_TO_IN);
-                zH = bot.getOrientation().getYaw(AngleUnit.RADIANS);
-                zH-=Math.PI;
-                zH += Math.PI / 2.0 ;
-                zH = zH % (2.0 * Math.PI);
-                if (zH < 0) zH += 2.0 * Math.PI;
-                double headingError = zH - hPred;
-                while (headingError > Math.PI) headingError -= 2.0 * Math.PI;
-                while (headingError < -Math.PI) headingError += 2.0 * Math.PI;
-                double kH = pHPred / (pHPred + globals.rH);
-                hEst = hPred + kH * headingError;
-                while (hEst > Math.PI) hEst -= 2.0 * Math.PI;
-                while (hEst < -Math.PI) hEst += 2.0 * Math.PI;
-                pH = (1.0 - kH) * pHPred;
-
-
-
-                double kX = pXPred / (pXPred + globals.kalman.rX);
-                double kY = pYPred / (pYPred + globals.kalman.rY);
-
-                xEst = xPred + kX * (zX - xPred);
-                yEst = yPred + kY * (zY - yPred);
-
-                pX = (1.0 - kX) * pXPred;
-                pY = (1.0 - kY) * pYPred;
-            }
-
-        } else {
-            relocReady = false;
-        }
-        fusedPose = new Pose(xEst, yEst, hEst);
-        if (relocReady && g2.getButton(GamepadKeys.Button.DPAD_DOWN))  {
-            follower.setX(fusedPose.getX());
-            follower.setY(fusedPose.getY());
-            gamepad2.rumble(0.3, 0.3, 200);
-        }
-
-        telemetry.addData("timer", relocTimer);
-        telemetry.addData("read", relocReady);
-
-
-
-    }
-
-
 }
