@@ -41,15 +41,14 @@ import org.firstinspires.ftc.teamcode.vars.states;
 
 import java.util.List;
 
-@Autonomous (name = "Far Blue PMSS")
-public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
+@Autonomous (name = "Far Blue STANDARD")
+public class FarBlueStandard extends CommandOpMode {
     private Follower follower;
     TelemetryData telemetryData = new TelemetryData(telemetry);
-    private ElapsedTime timer = new ElapsedTime();
     private boolean scheduled = false;
     private SequentialCommandGroup froggyroute;
     private int shootnum = 0;
-    public PathChain Path1, Path2, Path3, Path4, Path5, Path6, Path7, Path8, Path9, Path10;
+    public PathChain Path1, Path2, Path3, Path4, Path5, Path6, Path7, Path8, Path9, Path10, Path11, Path12, Path13, Path14;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -58,9 +57,9 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
     public void buildpath() {
         Path1 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(40.000, 9.00).mirror(),
+                                new Pose(40.000, 9.00),
 
-                                new Pose(9.000, 9.00)
+                                new Pose(10.000, 9.00)
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -68,7 +67,7 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
 
         Path2 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(9.000, 9.00),
+                                new Pose(10.000, 9.00),
 
                                 new Pose(44.000, 9.00)
                         )
@@ -80,36 +79,33 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
                         new BezierLine(
                                 new Pose(44.000, 9.00),
 
-                                new Pose(9.000, 9.00)
+                                new Pose(10.000, 9.00)
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
                 .build();
-
         Path4 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(9.000, 9.00),
+                                new Pose(10.000, 9.00),
 
                                 new Pose(44.000, 9.00)
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
-                .build();
 
+                .build();
 
         Path5 = follower.pathBuilder().addPath(
                         new BezierLine(
                                 new Pose(44.000, 9.00),
 
-                                new Pose(42.500, 35.500)
+                                new Pose(10.000, 9.00)
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
-
                 .build();
-
         Path6 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(42.500, 35.500),
+                                new Pose(10.000, 9.00),
 
-                                new Pose(9.000, 35.500)
+                                new Pose(44.000, 9.00)
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -117,20 +113,17 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
 
         Path7 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(9.000, 35.500),
+                                new Pose(44.000, 9.00),
 
-                                new Pose(44.000, 9.000)
+                                new Pose(10.000, 9.00)
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
-
                 .build();
-
-
         Path8 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(44.000, 9.000),
+                                new Pose(10.000, 9.00),
 
-                                new Pose(9.000, 9.000)
+                                new Pose(44.000, 9.00)
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -138,9 +131,17 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
 
         Path9 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(9.000, 9.000),
+                                new Pose(44.000, 9.00),
 
-                                new Pose(44.000, 9.000)
+                                new Pose(10.000, 9.00)
+                        )
+                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                .build();
+        Path2 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(10.000, 9.00),
+
+                                new Pose(44.000, 9.00)
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -148,12 +149,48 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
 
         Path10 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(44.000, 9.000),
+                                new Pose(44.000, 9.00),
 
-                                new Pose(30.000, 9.000)
+                                new Pose(10.000, 9.00)
+                        )
+                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                .build();
+        Path11 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(10.000, 9.00),
+
+                                new Pose(44.000, 9.00)
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
+                .build();
+
+        Path12 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(44.000, 9.00),
+
+                                new Pose(10.000, 9.00)
+                        )
+                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                .build();
+
+        Path13 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(10.000, 9.00),
+
+                                new Pose(44.000, 9.00)
+                        )
+                ).setConstantHeadingInterpolation(Math.toRadians(180))
+
+                .build();
+
+        Path14 = follower.pathBuilder().addPath(
+                        new BezierLine(
+                                new Pose(44.000, 9.00),
+
+                                new Pose(30.000, 9.00)
+                        )
+                ).setConstantHeadingInterpolation(Math.toRadians(180))
                 .build();
     }
 
@@ -296,7 +333,7 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
         public void launch(){
             launchPIDF.setSetPoint(targetRPM);
             launchPower = launchPIDF.calculate(RPM);
-            if (RPM < 300) {
+            if (RPM < 400) {
                 l1.set(0.5);
                 l2.set(0.5);
             } else {
@@ -304,7 +341,7 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
                 l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
             }
 
-            if (launchPIDF.atSetPoint() && robotZone.isInside(farLaunchZone) && !follower.isBusy()) {
+            if (launchPIDF.atSetPoint() && robotZone.isInside(farLaunchZone) && !follower.isBusy() && turretPIDF.atSetPoint()) {
                 boolean RPMdip = previousRPM - RPM > 80;
                 if (RPMdip && !dip1) {
                     ballsLaunched++;
@@ -413,10 +450,7 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
                         new froggylaunch(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
-                        new SequentialCommandGroup(
-                                new FollowPathCommand(follower, Path1),
-                                new WaitCommand(500)
-                        ),
+                        new FollowPathCommand(follower, Path1),
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
@@ -425,7 +459,7 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
                         new FollowPathCommand(follower, Path2)
                 ),
                 new ParallelDeadlineGroup(
-                        new FollowPathCommand(follower, Path1),
+                        new FollowPathCommand(follower, Path3),
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
@@ -433,26 +467,47 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
                         new froggylaunch(everythingsubsystem),
                         new FollowPathCommand(follower, Path4)
                 ),
-                new FollowPathCommand(follower, Path5),
                 new ParallelDeadlineGroup(
-                        new FollowPathCommand(follower, Path6 ),
+                        new FollowPathCommand(follower, Path5),
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(4200),
+                        new WaitCommand(3500),
                         new froggylaunch(everythingsubsystem),
-                        new FollowPathCommand(follower, Path7)
+                        new FollowPathCommand(follower, Path6)
                 ),
                 new ParallelDeadlineGroup(
-                        new FollowPathCommand(follower, Path8),
+                        new FollowPathCommand(follower, Path7),
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(4200),
+                        new WaitCommand(3500),
                         new froggylaunch(everythingsubsystem),
-                        new FollowPathCommand(follower, Path9)
+                        new FollowPathCommand(follower, Path8)
                 ),
-                new FollowPathCommand(follower, Path10)
+                new ParallelDeadlineGroup(
+                        new FollowPathCommand(follower, Path9),
+                        new froggyeat(everythingsubsystem)
+                ),
+                new ParallelDeadlineGroup(
+                        new WaitCommand(3500),
+                        new froggylaunch(everythingsubsystem),
+                        new FollowPathCommand(follower, Path10)
+                ),
+                new ParallelDeadlineGroup(
+                        new FollowPathCommand(follower, Path11),
+                        new froggyeat(everythingsubsystem)
+                ),
+                new ParallelDeadlineGroup(
+                        new WaitCommand(3500),
+                        new froggylaunch(everythingsubsystem),
+                        new FollowPathCommand(follower, Path12)
+                ),
+                new ParallelDeadlineGroup(
+                        new FollowPathCommand(follower, Path13),
+                        new froggyeat(everythingsubsystem)
+                ),
+                new FollowPathCommand(follower, Path14)
         );
     }
 
@@ -472,7 +527,7 @@ public class FROGTONOMOUSFARBLUEPMSS extends CommandOpMode {
         telemetryData.addData("Y", follower.getPose().getY());
         telemetryData.addData("Heading", follower.getPose().getHeading());
         telemetryData.update();
-
     }
 }
+
 
