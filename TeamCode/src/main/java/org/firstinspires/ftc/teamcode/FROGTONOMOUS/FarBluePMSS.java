@@ -59,7 +59,7 @@ public class FarBluePMSS extends CommandOpMode {
                         new BezierLine(
                                 new Pose(40.000, 9.00),
 
-                                new Pose(9.000, 9.00)
+                                new Pose(10.000, 9.00)
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -67,7 +67,7 @@ public class FarBluePMSS extends CommandOpMode {
 
         Path2 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(9.000, 9.00),
+                                new Pose(10.000, 9.00),
 
                                 new Pose(44.000, 9.00)
                         )
@@ -79,14 +79,14 @@ public class FarBluePMSS extends CommandOpMode {
                         new BezierLine(
                                 new Pose(44.000, 9.00),
 
-                                new Pose(9.000, 9.00)
+                                new Pose(10.000, 9.00)
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
                 .build();
 
         Path4 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(9.000, 9.00),
+                                new Pose(10.000, 9.00),
 
                                 new Pose(44.000, 9.00)
                         )
@@ -108,7 +108,7 @@ public class FarBluePMSS extends CommandOpMode {
                         new BezierLine(
                                 new Pose(42.500, 35.500),
 
-                                new Pose(9.000, 35.500)
+                                new Pose(10.000, 35.500)
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -116,7 +116,7 @@ public class FarBluePMSS extends CommandOpMode {
 
         Path7 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(9.000, 35.500),
+                                new Pose(10.000, 35.500),
 
                                 new Pose(44.000, 9.000)
                         )
@@ -129,7 +129,7 @@ public class FarBluePMSS extends CommandOpMode {
                         new BezierLine(
                                 new Pose(44.000, 9.000),
 
-                                new Pose(9.000, 9.000)
+                                new Pose(10.000, 9.000)
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -137,7 +137,7 @@ public class FarBluePMSS extends CommandOpMode {
 
         Path9 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(9.000, 9.000),
+                                new Pose(10.000, 9.000),
 
                                 new Pose(44.000, 9.000)
                         )
@@ -251,7 +251,7 @@ public class FarBluePMSS extends CommandOpMode {
             }
 
             double turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
-            if (!turretPIDF.atSetPoint() && robotZone.isInside(farLaunchZone)) {
+            if (!turretPIDF.atSetPoint()) {
                 t1.set(setTurret(turretPower));
                 t2.set(setTurret(turretPower));
             } else {

@@ -289,7 +289,7 @@ public class FarBlueStandard extends CommandOpMode {
             }
 
             double turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
-            if (!turretPIDF.atSetPoint() && robotZone.isInside(farLaunchZone)) {
+            if (!turretPIDF.atSetPoint()) {
                 t1.set(setTurret(turretPower));
                 t2.set(setTurret(turretPower));
             } else {
