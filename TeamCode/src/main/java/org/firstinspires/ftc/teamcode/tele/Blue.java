@@ -44,7 +44,7 @@ public class Blue extends OpMode {
     private Motor l1, l2, intake, transfer;
     private ServoEx hood, gate, tiltl, tiltr;
     private CRServoEx t1, t2;
-    private PIDController turretPIDF = new PIDController(globals.turret.pFar, globals.turret.i, globals.turret.d);
+    private PIDController turretPIDF = new PIDController(globals.turret.pFarTele, globals.turret.i, globals.turret.d);
     private AnalogInput turretEncoder;
     private GamepadEx g1, g2;
     private Follower follower;
@@ -55,14 +55,14 @@ public class Blue extends OpMode {
         normal
     } private launchMode currentLaunchMode = launchMode.normal;
     private enum launchState {
-        idle, 
+        idle,
         intaking,
         launching
-        
+
     } private launchState currentLaunchState = launchState.idle;
     private String robotLocation = "No Zone";
-    
-    
+
+
     private double lastTime, launchPower, RPM, previousRPM, dist, turretAng, targetRPM, hoodAngle, leftY, leftX, turretPower;
     private double turretPos = 0F;
     private int lastPosition;
@@ -77,7 +77,6 @@ public class Blue extends OpMode {
     private static final Style robotLook = new Style(
             "", "#3F51B5", 1
     );
-
 
     private double xEst = 0, yEst = 0, hEst = 0;   // odometry estimate
     private double pX = globals.kalman.pX0, pY = globals.kalman.pY0, pH = globals.pHg; // odometry error
@@ -244,7 +243,7 @@ public class Blue extends OpMode {
                     intake.set(1.0);
                     transfer.set(0.5);
                     gate.set(globals.gate.close);
-                } else if (launchPIDF.atSetPoint() && !robotLocation.equals("No Zone") && turretInRange && turretPIDF.atSetPoint()) {
+                } else if (launchPIDF.atSetPoint() && !robotLocation.equals("No Zone") && turretInRange) {
                     gate.set(globals.gate.open);
                     if (Objects.equals(robotLocation, "Far Zone")) {
                         intake.set(.7);
@@ -281,66 +280,66 @@ public class Blue extends OpMode {
                 currentLaunchMode = launchMode.SOTM;
             }
 
-            switch (currentLaunchMode) {
-                case SOTM:
-                    dist = goal.minus(robot).getAsVector().getMagnitude();
+        switch (currentLaunchMode) {
+            case SOTM:
+                dist = goal.minus(robot).getAsVector().getMagnitude();
 
-                    double accelMag = Math.floor(follower.getAcceleration().getMagnitude());
-                    double accelAngle = Math.toRadians(Math.floor(Math.toDegrees(follower.getAcceleration().getTheta())));
-                    Vector accel = new Vector(accelMag, accelAngle); // calculate acceleration rounded to nearest inch/s, nearest degree (in inch/s^2, rad)
+                double accelMag = Math.floor(follower.getAcceleration().getMagnitude());
+                double accelAngle = Math.toRadians(Math.floor(Math.toDegrees(follower.getAcceleration().getTheta())));
+                Vector accel = new Vector(accelMag, accelAngle); // calculate acceleration rounded to nearest inch/s, nearest degree (in inch/s^2, rad)
 
-                    Vector velocity = follower.getVelocity().plus(
-                                new Vector(accel.getMagnitude()
+                Vector velocity = follower.getVelocity().plus(
+                        new Vector(accel.getMagnitude()
                                 * globals.launcher.velTime, accel.getTheta())); // create a velocity vector by using v = u + at
 
-                    double distanceDiff = velocity.getMagnitude() * (0.0025 * dist + 0.3871);
-                    Vector robotVelocity = new Vector(distanceDiff, velocity.getTheta());
-                    Pose newGoal = new Pose(-robotVelocity.getXComponent() + goal.getX(), -robotVelocity.getYComponent() + goal.getY());
+                double distanceDiff = velocity.getMagnitude() * (0.0025 * dist + 0.3871);
+                Vector robotVelocity = new Vector(distanceDiff, velocity.getTheta());
+                Pose newGoal = new Pose(-robotVelocity.getXComponent() + goal.getX(), -robotVelocity.getYComponent() + goal.getY());
 
-                    double newGoalAngle = Math.atan2(newGoal.getY() - y, newGoal.getX() - x);
-                    turretAng = Math.toDegrees(AngleUnit.normalizeRadians(follower.getHeading() - newGoalAngle));
-                    dist = newGoal.minus(robot).getAsVector().getMagnitude();
-                    break;
-                case normal:
+                double newGoalAngle = Math.atan2(newGoal.getY() - y, newGoal.getX() - x);
+                turretAng = Math.toDegrees(AngleUnit.normalizeRadians(follower.getHeading() - newGoalAngle));
+                dist = newGoal.minus(robot).getAsVector().getMagnitude();
+                break;
+            case normal:
 
-                    Pose target = goal.minus(robot);
-                    Vector robotToGoal = target.getAsVector();
-                    double goalAngle = Math.atan2(goal.getY() - y, goal.getX() - x);
+                Pose target = goal.minus(robot);
+                Vector robotToGoal = target.getAsVector();
+                double goalAngle = Math.atan2(goal.getY() - y, goal.getX() - x);
 
-                    turretAng = Math.toDegrees(AngleUnit.normalizeRadians(follower.getHeading() - goalAngle));
-                    dist = robotToGoal.getMagnitude();
+                turretAng = Math.toDegrees(AngleUnit.normalizeRadians(follower.getHeading() - goalAngle));
+                dist = robotToGoal.getMagnitude();
 
-                    break;
-            }
+                break;
+        }
 
-            if ((robotZone.isInside(closeLaunchZone) || robotZone.isInside(farLaunchZone)) && !zapLeon ) {
-                gamepad1.rumble(0.6, 0.6, 400);
+        if ((robotZone.isInside(closeLaunchZone) || robotZone.isInside(farLaunchZone)) && !zapLeon ) {
+            gamepad1.rumble(0.6, 0.6, 400);
 
-                zapLeon = true;
-            }
+            zapLeon = true;
+        }
 
-            if (!robotZone.isInside(closeLaunchZone) && !robotZone.isInside(farLaunchZone) && zapLeon) {
-                zapLeon = false;
-            }
+        if (!robotZone.isInside(closeLaunchZone) && !robotZone.isInside(farLaunchZone) && zapLeon) {
+            zapLeon = false;
+        }
 
-            telemetry.addData("zap", zapLeon);
+        telemetry.addData("zap", zapLeon);
 
-            if (robotZone.isInside(closeLaunchZone)) {
-                targetRPM = 2414.2 * Math.exp(0.0036 * dist);
-                if (dist < 35) {
-                    hoodAngle = 40;
-                } else {
-                    hoodAngle = 147.8 * Math.log(dist) - 441.52;
-                }
-                robotLocation = "Close Zone";
-            } else if (robotZone.isInside(farLaunchZone)) {
-                targetRPM = (13.09 * dist + 2164.9) * 1.01;
-                hoodAngle = 211.5;
-                robotLocation = "Far Zone";
+        if (robotZone.isInside(closeLaunchZone)) {
+            targetRPM = 2414.2 * Math.exp(0.0036 * dist);
+            if (dist < 35) {
+                hoodAngle = 40;
             } else {
-                targetRPM = (13.09 * dist + 2164.9) * 1.01;
-                robotLocation = "No Zone";
+                hoodAngle = 147.8 * Math.log(dist) - 441.52;
             }
+            robotLocation = "Close Zone";
+        } else if (robotZone.isInside(farLaunchZone)) {
+            targetRPM = (13.09 * dist + 2164.9) * 1.01;
+            hoodAngle = 211.5;
+            robotLocation = "Far Zone";
+        } else {
+            targetRPM = (13.09 * dist + 2164.9) * 1.01;
+            robotLocation = "No Zone";
+        }
 
             if (Math.abs(turretAng) > 120) {
                 turretAng = 0;
@@ -380,44 +379,41 @@ public class Blue extends OpMode {
             prevOptions2 = g2.getButton(GamepadKeys.Button.DPAD_LEFT);
 
 
-            if (autoAim) {
-                if (Math.abs(turretPIDF.getPositionError()) > 1000) {
-                    turretPIDF.setP(globals.turret.pFar);
-                } else {
-                    turretPIDF.setP(globals.turret.pClose);
-                }
-                turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
-                if (!turretPIDF.atSetPoint()) {
-                    t1.set(setTurret(turretPower));
-                    t2.set(setTurret(turretPower));
-                } else {
-                    t1.set(0);
-                    t2.set(0);
-                }
+        if (autoAim) {
+            if (Math.abs(turretPIDF.getPositionError()) > 1000) {
+                turretPIDF.setP(globals.turret.pFarTele);
+            } else {
+                turretPIDF.setP(globals.turret.pCloseTele);
+            }
+            turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
+
+                t1.set(setTurret(turretPower));
+                t2.set(setTurret(turretPower));
+
                 turretPos = intake.getCurrentPosition();
             } else {
                 turretInRange = true;
                 if (Math.abs(turretPIDF.getPositionError()) > 1000) {
-                    turretPIDF.setP(globals.turret.pFar);
+                    turretPIDF.setP(globals.turret.pFarTele);
                 } else {
-                    turretPIDF.setP(globals.turret.pClose);
+                    turretPIDF.setP(globals.turret.pCloseTele);
                 }
                 turretPos +=  400* (g2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) - g2.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER));
                 turretPIDF.setSetPoint(MathFunctions.clamp(turretPos, -6000 + turretZeroOffset, 6000 + turretZeroOffset));
                 if (Math.abs(turretPIDF.getPositionError()) > 1000) {
-                    turretPIDF.setP(globals.turret.pFar);
+                    turretPIDF.setP(globals.turret.pFarTele);
                 } else {
-                    turretPIDF.setP(globals.turret.pClose);
+                    turretPIDF.setP(globals.turret.pCloseTele);
                 }
                 turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
                 t1.set(setTurret(turretPower));
                 t2.set(setTurret(turretPower));
 
 
-            }
-
-
         }
+
+
+    }
 
     private double setTurret(double power) {
         return Math.signum(power) * (Math.abs(power) + globals.turret.ks);
@@ -439,7 +435,6 @@ public class Blue extends OpMode {
         if (Math.abs(leftY) < 0.2) {
             leftY = 0;
         }
-
 
         if (g1.getButton(GamepadKeys.Button.DPAD_UP)) {
 

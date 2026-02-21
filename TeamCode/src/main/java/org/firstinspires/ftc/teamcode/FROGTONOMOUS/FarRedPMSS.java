@@ -81,7 +81,8 @@ public class FarRedPMSS extends CommandOpMode {
 
                                 new Pose(10.000, 9.00).mirror()
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(0))
+                ).setConstantHeadingInterpolation(Math.toRadians(180))
+
                 .build();
 
         Path4 = follower.pathBuilder().addPath(
@@ -90,9 +91,9 @@ public class FarRedPMSS extends CommandOpMode {
 
                                 new Pose(44.000, 9.00).mirror()
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(0))
-                .build();
+                ).setConstantHeadingInterpolation(Math.toRadians(180))
 
+                .build();
 
         Path5 = follower.pathBuilder().addPath(
                         new BezierLine(
@@ -161,14 +162,12 @@ public class FarRedPMSS extends CommandOpMode {
     public class everythingsubsys extends SubsystemBase {
         private ServoEx hood, gate;
         private CRServo t1, t2;
-        private double dist, turretAng = 0, targetRPM, hoodAngle, RPM, lastTime, lastPosition, previousRPM, launchPower;
-        private PIDController turretPIDF = new PIDController(globals.turret.pFar, globals.turret.i, globals.turret.d);
-        private int ballsLaunched = 0;
+        private double dist, turretAng = 0, targetRPM, hoodAngle, RPM, lastTime, lastPosition, previousRPM, launchPower, turretPower, turretPos;
+        private PIDController turretPIDF = new PIDController(globals.turret.pFarAuto, globals.turret.i, globals.turret.d);
         private MotorEx l1, l2, intake, transfer;
         private PIDController launchPIDF = new PIDController(globals.launcher.p, globals.launcher.i, globals.launcher.d);
         private final PolygonZone farLaunchZone = new PolygonZone(new Point(45, 0), new Point(72, 24), new Point(96, 0));
         private final PolygonZone robotZone = new PolygonZone(18, 18);
-        private boolean dip1 = false, dip2 = false;
         private AnalogInput turretEncoder;
         private double turretZeroOffset;
         public everythingsubsys(HardwareMap hardwareMap){
@@ -217,7 +216,7 @@ public class FarRedPMSS extends CommandOpMode {
 
         public void intaking(){
             intake.set(1);
-            transfer.set(0.2);
+            transfer.set(0.5);
             gate.set(globals.gate.close);
         }
         public void launchcalc() {
@@ -245,19 +244,14 @@ public class FarRedPMSS extends CommandOpMode {
             double turretTarget = degresToTicks((turretAng * 3)) + turretZeroOffset;
             turretPIDF.setSetPoint(turretTarget);
             if (Math.abs(turretPIDF.getPositionError()) > 1000) {
-                turretPIDF.setP(globals.turret.pFar);
+                turretPIDF.setP(globals.turret.pFarAuto);
             } else {
-                turretPIDF.setP(globals.turret.pClose);
+                turretPIDF.setP(globals.turret.pCloseAuto);
             }
-
-            double turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
-            if (!turretPIDF.atSetPoint()) {
+            telemetry.addData("err", Math.abs(turretPIDF.getPositionError()));
+            turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
                 t1.set(setTurret(turretPower));
                 t2.set(setTurret(turretPower));
-            } else {
-                t1.set(0.001);
-                t2.set(0.001);
-            }
         }
         public void intakedone(){
             if (shootnum ==1){
@@ -303,39 +297,19 @@ public class FarRedPMSS extends CommandOpMode {
                 l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
             }
 
-            if (launchPIDF.atSetPoint() && robotZone.isInside(farLaunchZone) && !follower.isBusy() && turretPIDF.atSetPoint()) {
-                boolean RPMdip = previousRPM - RPM > 80;
-                if (RPMdip && !dip1) {
-                    ballsLaunched++;
-                    dip1 = true;
-                    dip2 = false;
-                } else if (RPMdip && !dip2 && dip1) {
-                    ballsLaunched++;
-                    dip2 = true;
-                }
-
+            if (launchPIDF.atSetPoint() && robotZone.isInside(farLaunchZone) && !follower.isBusy() && turretPIDF.atSetPoint()) {//TODO MAYBE REMOVE TURRETPIDF
                 gate.set(globals.gate.open);
-                intake.set(0.57);
-                transfer.set(0.57);
+                intake.set(0.7);//57
+                transfer.set(0.7);//57
             }
+            hood.set(MathFunctions.clamp(hoodAngle, 40, 211.5));
 
-            if (ballsLaunched == 0) {
-                hood.set(MathFunctions.clamp(hoodAngle, 40, 211.5));
-            } else if (ballsLaunched == 1) {
-                hood.set(MathFunctions.clamp(hoodAngle - 5, 40, 211.5));
-            } else {
-                hood.set(MathFunctions.clamp(hoodAngle- 12, 40, 211.5));
-            }
         }
         public void launchend(){
             l1.set(0.2);
             l2.set(0.2);
             intake.set(0);
             transfer.set(0);
-            dip1 = false;
-            dip2 = false;
-            ballsLaunched = 0;
-            shootnum++;
         }
 
         @Override
@@ -456,7 +430,6 @@ public class FarRedPMSS extends CommandOpMode {
     }
 
     //RUN//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
     @Override
     public void run() {
         if (!scheduled) {
@@ -466,11 +439,9 @@ public class FarRedPMSS extends CommandOpMode {
         states.autoEndPose = follower.getPose();
         super.run();
         follower.update();
-
         telemetryData.addData("X", follower.getPose().getX());
         telemetryData.addData("Y", follower.getPose().getY());
         telemetryData.addData("Heading", follower.getPose().getHeading());
         telemetryData.update();
     }
 }
-

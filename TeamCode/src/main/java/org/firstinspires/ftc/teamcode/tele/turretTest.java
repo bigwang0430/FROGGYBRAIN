@@ -18,7 +18,7 @@ import org.firstinspires.ftc.teamcode.vars.globals;
 
 @TeleOp(name = "turretttestt")
 public class turretTest extends OpMode {
-    private PIDController turretPIDF = new PIDController(globals.turret.pFar, globals.turret.i, globals.turret.d);
+    private PIDController turretPIDF = new PIDController(globals.turret.pFarTele, globals.turret.i, globals.turret.d);
     private CRServoEx t1, t2;
     private AnalogInput turretEncoder;
     private Motor intake;
@@ -39,11 +39,18 @@ public class turretTest extends OpMode {
 
     @Override
     public void loop() {
-        turretPIDF.setPID(globals.turret.pFar, globals.turret.i, globals.turret.d);
-        turretPIDF.setSetPoint(globals.turret.turretTarget);
-        double turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
+//        if (Math.abs(turretPIDF.getPositionError()) > 1000) {
+//            turretPIDF.setP(globals.turret.pFar);
+//        } else {
+//            turretPIDF.setP(globals.turret.pClose);
+//        }
+//        turretPIDF.setSetPoint(globals.turret.turretTarget);
+//        double turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
+//
+//
+//            t1.set(setTurret(turretPower));
+//            t2.set(setTurret(turretPower));
 
-        double turretpos = Math.signum(turretPower) * (Math.abs(turretPower) + globals.turret.ks);
 //        if (!turretPIDF.atSetPoint()) {
 //            t1.set(turretpos);
 //            t2.set(turretpos);
@@ -52,8 +59,8 @@ public class turretTest extends OpMode {
 //            t2.set(0);
 //        }
 
-        t1.set(0.0001);
-        t2.set(0.0001);
+        t1.set(0);
+        t2.set(0);
 
         telemetry.addData("voltage", turretEncoder.getVoltage());
         TelemetryPacket rpmPacket = new TelemetryPacket();
@@ -74,5 +81,10 @@ public class turretTest extends OpMode {
 
     public double voltageToDegrees(double volts) {
         return (volts * 360) / 3.2;
+    }
+
+    private double setTurret(double power) {
+
+        return Math.signum(power) * (Math.abs(power) + globals.turret.ks);
     }
 }

@@ -43,13 +43,17 @@ import org.firstinspires.ftc.teamcode.vars.states;
 
 import java.util.List;
 
-@Autonomous (name = "Close Blue")
+@Autonomous (name = "Close")
 public class CloseAutoTemplate extends CommandOpMode {
     private Follower follower;
     TelemetryData telemetryData = new TelemetryData(telemetry);
     private boolean scheduled = false;
     private SequentialCommandGroup froggyroute;
     public PathChain Path1, Path2, Path3, Path4, Path5, Path6, Path7, Path8, Path9, Path10, Path11, Path12, Path13, Path14;
+    private enum launchMode {
+        SOTM,
+        normal
+    } private launchMode currentLaunchMode = launchMode.normal;
 
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -203,7 +207,7 @@ public class CloseAutoTemplate extends CommandOpMode {
         private ServoEx hood, gate;
         private CRServo t1, t2;
         private double dist, turretAng = 0, targetRPM, hoodAngle, RPM, lastTime, lastPosition, previousRPM, launchPower, turretPower, turretPos;
-        private PIDController turretPIDF = new PIDController(globals.turret.pFar, globals.turret.i, globals.turret.d);
+        private PIDController turretPIDF = new PIDController(globals.turret.pFarAuto, globals.turret.i, globals.turret.d);
         private MotorEx l1, l2, intake, transfer;
         private PIDController launchPIDF = new PIDController(globals.launcher.p, globals.launcher.i, globals.launcher.d);
         private final PolygonZone closeLaunchZone = new PolygonZone(new Point(144, 144), new Point(72, 72), new Point(0, 144));
@@ -273,16 +277,47 @@ public class CloseAutoTemplate extends CommandOpMode {
             double x = follower.getPose().getX();
             double y = follower.getPose().getY();
             Pose robot = new Pose(x, y);
-            Pose goal = new Pose(globals.turret.goalX, globals.turret.goalY);//todo
+            Pose goal = new Pose(globals.turret.closeGoalX, globals.turret.closeGoalY);//TODO
             robotZone.setPosition(x, y);
             robotZone.setRotation(follower.getPose().getHeading());
 
-            Pose target = goal.minus(robot);
-            Vector robotToGoal = target.getAsVector();
-            double goalAngle = Math.atan2(goal.getY() - y, goal.getX() - x);
+            if (follower.getVelocity().getMagnitude() < 6 ) {
+                currentLaunchMode = launchMode.normal;
+            } else {
+                currentLaunchMode = launchMode.SOTM;
+            }
 
-            turretAng = Math.toDegrees(AngleUnit.normalizeRadians(follower.getHeading() - goalAngle));
-            dist = robotToGoal.getMagnitude();
+            switch (currentLaunchMode) {
+                case SOTM:
+                    dist = goal.minus(robot).getAsVector().getMagnitude();
+
+                    double accelMag = Math.floor(follower.getAcceleration().getMagnitude());
+                    double accelAngle = Math.toRadians(Math.floor(Math.toDegrees(follower.getAcceleration().getTheta())));
+                    Vector accel = new Vector(accelMag, accelAngle); // calculate acceleration rounded to nearest inch/s, nearest degree (in inch/s^2, rad)
+
+                    Vector velocity = follower.getVelocity().plus(
+                            new Vector(accel.getMagnitude()
+                                    * globals.launcher.velTime, accel.getTheta())); // create a velocity vector by using v = u + at
+
+                    double distanceDiff = velocity.getMagnitude() * (0.0025 * dist + 0.3871);
+                    Vector robotVelocity = new Vector(distanceDiff, velocity.getTheta());
+                    Pose newGoal = new Pose(-robotVelocity.getXComponent() + goal.getX(), -robotVelocity.getYComponent() + goal.getY());
+
+                    double newGoalAngle = Math.atan2(newGoal.getY() - y, newGoal.getX() - x);
+                    turretAng = Math.toDegrees(AngleUnit.normalizeRadians(follower.getHeading() - newGoalAngle));
+                    dist = newGoal.minus(robot).getAsVector().getMagnitude();
+                    break;
+                case normal:
+
+                    Pose target = goal.minus(robot);
+                    Vector robotToGoal = target.getAsVector();
+                    double goalAngle = Math.atan2(goal.getY() - y, goal.getX() - x);
+
+                    turretAng = Math.toDegrees(AngleUnit.normalizeRadians(follower.getHeading() - goalAngle));
+                    dist = robotToGoal.getMagnitude();
+
+                    break;
+            }
 
             if (robotZone.isInside(closeLaunchZone)) {
                 targetRPM = 2414.2 * Math.exp(0.0036 * dist);
@@ -304,19 +339,14 @@ public class CloseAutoTemplate extends CommandOpMode {
 
 
             if (Math.abs(turretPIDF.getPositionError()) > 1000) {
-                turretPIDF.setP(globals.turret.pFar);
+                turretPIDF.setP(globals.turret.pFarAuto);
             } else {
-                turretPIDF.setP(globals.turret.pClose);
+                turretPIDF.setP(globals.turret.pCloseAuto);
             }
             telemetry.addData("err", Math.abs(turretPIDF.getPositionError()));
             turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
-            if (!turretPIDF.atSetPoint()) {//ting about robotzone
                 t1.set(setTurret(turretPower));
                 t2.set(setTurret(turretPower));
-            } else {
-                t1.set(0);
-                t2.set(0);
-            }
         }
         private double setTurret(double power) {
             return Math.signum(power) * (Math.abs(power) + globals.turret.ks);
@@ -348,7 +378,7 @@ public class CloseAutoTemplate extends CommandOpMode {
                 l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
             }
 
-            if (launchPIDF.atSetPoint() && robotZone.isInside(closeLaunchZone) && !follower.isBusy() && turretPIDF.atSetPoint()) {
+            if (launchPIDF.atSetPoint() && robotZone.isInside(closeLaunchZone) && !follower.isBusy() && turretPIDF.atSetPoint()) {//TODO MAYBE REMOVE TURRETPIDF
                 gate.set(globals.gate.open);
                 intake.set(1);
                 transfer.set(1);

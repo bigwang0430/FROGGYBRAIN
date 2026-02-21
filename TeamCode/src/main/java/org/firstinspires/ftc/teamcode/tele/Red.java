@@ -44,7 +44,7 @@ public class Red extends OpMode {
     private Motor l1, l2, intake, transfer;
     private ServoEx hood, gate, tiltl, tiltr;
     private CRServoEx t1, t2;
-    private PIDController turretPIDF = new PIDController(globals.turret.pFar, globals.turret.i, globals.turret.d);
+    private PIDController turretPIDF = new PIDController(globals.turret.pFarTele, globals.turret.i, globals.turret.d);
     private AnalogInput turretEncoder;
     private GamepadEx g1, g2;
     private Follower follower;
@@ -143,7 +143,7 @@ public class Red extends OpMode {
         follower.setStartingPose(states.autoEndPose); //TEMPORARY
 
 
-        while (timer.seconds() < 0.5) {
+        while (timer.seconds() < 1) {
             telemetry.addData("timer", timer.seconds());
             telemetry.update();
         }
@@ -176,8 +176,6 @@ public class Red extends OpMode {
         drive();
         launch();
         drawRobot(follower.getPose(), robotLook);
-
-
 
 
         telemetry();
@@ -245,7 +243,7 @@ public class Red extends OpMode {
                     intake.set(1.0);
                     transfer.set(0.5);
                     gate.set(globals.gate.close);
-                } else if (launchPIDF.atSetPoint() && !robotLocation.equals("No Zone") && turretInRange && turretPIDF.atSetPoint()) {
+                } else if (launchPIDF.atSetPoint() && !robotLocation.equals("No Zone") && turretInRange) {
                     gate.set(globals.gate.open);
                     if (Objects.equals(robotLocation, "Far Zone")) {
                         intake.set(.7);
@@ -343,72 +341,73 @@ public class Red extends OpMode {
             robotLocation = "No Zone";
         }
 
-        if (Math.abs(turretAng) > 120) {
-            turretAng = 0;
-            turretInRange = false;
-        } else  {
-            turretInRange = true;
-        }
-        boolean rightTrigger = g2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.5;
-        boolean leftTrigger = g2.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.5;
+            if (Math.abs(turretAng) > 120) {
+                turretAng = 0;
+                turretInRange = false;
+            } else  {
+                turretInRange = true;
+            }
 
-        double turretTarget = degresToTicks((turretAng * 3)) + turretZeroOffset;
-        turretPIDF.setSetPoint(turretTarget);
-        if (leftTrigger && !prevTriggerL) {
-            turretZeroOffset -= 150;
-        } else if (rightTrigger && !prevTriggerR) {
-            turretZeroOffset += 150;
-        }
-        prevTriggerL = leftTrigger;
-        prevTriggerR = rightTrigger;
+            double turretTarget = degresToTicks((turretAng * 3)) + turretZeroOffset;
+            turretPIDF.setSetPoint(turretTarget);
+
+            boolean rightTrigger = g2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.5;
+            boolean leftTrigger = g2.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.5;
 
 
-        if (g2.getButton(GamepadKeys.Button.DPAD_LEFT) && !prevOptions2) {
-            autoAim = !autoAim;
-        }
+            if (g2.getButton(GamepadKeys.Button.DPAD_LEFT) && !prevOptions2) {
+                autoAim = !autoAim;
+            }
 
-        if (g2.getButton(GamepadKeys.Button.RIGHT_BUMPER) && !rightBumper) {
-            turretZeroOffset += 75;
-        } else if (g2.getButton(GamepadKeys.Button.LEFT_BUMPER) && !leftBumper) {
-            turretZeroOffset -= 75;
-        }
-        rightBumper = g2.getButton(GamepadKeys.Button.RIGHT_BUMPER);
-        leftBumper = g2.getButton(GamepadKeys.Button.LEFT_BUMPER);
-        prevOptions2 = g2.getButton(GamepadKeys.Button.DPAD_LEFT);
+            if (leftTrigger && !prevTriggerL) {
+                turretZeroOffset -= 150;
+            } else if (rightTrigger && !prevTriggerR) {
+                turretZeroOffset += 150;
+            }
+
+            prevTriggerL = leftTrigger;
+            prevTriggerR = rightTrigger;
+
+
+            if (g2.getButton(GamepadKeys.Button.RIGHT_BUMPER) && !rightBumper) {
+                turretZeroOffset += 75;
+            } else if (g2.getButton(GamepadKeys.Button.LEFT_BUMPER) && !leftBumper) {
+                turretZeroOffset -= 75;
+            }
+            rightBumper = g2.getButton(GamepadKeys.Button.RIGHT_BUMPER);
+            leftBumper = g2.getButton(GamepadKeys.Button.LEFT_BUMPER);
+            prevOptions2 = g2.getButton(GamepadKeys.Button.DPAD_LEFT);
 
 
         if (autoAim) {
             if (Math.abs(turretPIDF.getPositionError()) > 1000) {
-                turretPIDF.setP(globals.turret.pFar);
+                turretPIDF.setP(globals.turret.pFarTele);
             } else {
-                turretPIDF.setP(globals.turret.pClose);
+                turretPIDF.setP(globals.turret.pCloseTele);
             }
             turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
-            if (!turretPIDF.atSetPoint()) {
+
                 t1.set(setTurret(turretPower));
                 t2.set(setTurret(turretPower));
+
+                turretPos = intake.getCurrentPosition();
             } else {
-                t1.set(0);
-                t2.set(0);
-            }
-            turretPos = intake.getCurrentPosition();
-        } else {
-            turretInRange = true;
-            if (Math.abs(turretPIDF.getPositionError()) > 1000) {
-                turretPIDF.setP(globals.turret.pFar);
-            } else {
-                turretPIDF.setP(globals.turret.pClose);
-            }
-            turretPos +=  400* (g2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) - g2.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER));
-            turretPIDF.setSetPoint(MathFunctions.clamp(turretPos, -6000 + turretZeroOffset, 6000 + turretZeroOffset));
-            if (Math.abs(turretPIDF.getPositionError()) > 1000) {
-                turretPIDF.setP(globals.turret.pFar);
-            } else {
-                turretPIDF.setP(globals.turret.pClose);
-            }
-            turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
-            t1.set(setTurret(turretPower));
-            t2.set(setTurret(turretPower));
+                turretInRange = true;
+                if (Math.abs(turretPIDF.getPositionError()) > 1000) {
+                    turretPIDF.setP(globals.turret.pFarTele);
+                } else {
+                    turretPIDF.setP(globals.turret.pCloseTele);
+                }
+                turretPos +=  400* (g2.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) - g2.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER));
+                turretPIDF.setSetPoint(MathFunctions.clamp(turretPos, -6000 + turretZeroOffset, 6000 + turretZeroOffset));
+                if (Math.abs(turretPIDF.getPositionError()) > 1000) {
+                    turretPIDF.setP(globals.turret.pFarTele);
+                } else {
+                    turretPIDF.setP(globals.turret.pCloseTele);
+                }
+                turretPower = MathFunctions.clamp(turretPIDF.calculate(intake.getCurrentPosition()), -1, 1);
+                t1.set(setTurret(turretPower));
+                t2.set(setTurret(turretPower));
 
 
         }
@@ -455,7 +454,6 @@ public class Red extends OpMode {
             follower.setPose(new Pose(144-15, 79, Math.toRadians(90)));
 
         }
-
 
 
         if (g1.getButton(GamepadKeys.Button.CROSS) && !prevCross1) {
@@ -513,6 +511,4 @@ public class Red extends OpMode {
         panelsField.line(x2, y2);
         panelsField.update();
     }
-
-
 }
