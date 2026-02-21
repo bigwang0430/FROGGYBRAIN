@@ -62,7 +62,7 @@ public class CloseBlue extends CommandOpMode {
     public void buildpath(){
         Path1 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(28.500, 127.00),
+                                new Pose(28.500, 126.50),
 
                                 new Pose(47.063, 83.590)
                         )

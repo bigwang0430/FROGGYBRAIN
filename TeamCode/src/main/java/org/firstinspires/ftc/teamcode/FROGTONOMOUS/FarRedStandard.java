@@ -334,7 +334,7 @@ public class FarRedStandard extends CommandOpMode {
                 l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
             }
 
-            if (launchPIDF.atSetPoint() && robotZone.isInside(farLaunchZone) && !follower.isBusy() && turretPIDF.atSetPoint()) {//TODO MAYBE REMOVE TURRETPIDF
+            if (launchPIDF.atSetPoint() && robotZone.isInside(farLaunchZone) && !follower.isBusy()) {//TODO MAYBE REMOVE TURRETPIDF
                 gate.set(globals.gate.open);
                 intake.set(0.7);//57
                 transfer.set(0.7);//57
@@ -347,6 +347,7 @@ public class FarRedStandard extends CommandOpMode {
             l2.set(0.2);
             intake.set(0);
             transfer.set(0);
+            shootnum++;
         }
 
         @Override
