@@ -380,7 +380,7 @@ public class Blue extends OpMode {
 
 
         if (autoAim) {
-            if (Math.abs(turretPIDF.getPositionError()) > 1000) {
+            if (Math.abs(turretPIDF.getPositionError()) > 1500) {
                 turretPIDF.setP(globals.turret.pFarTele);
             } else {
                 turretPIDF.setP(globals.turret.pCloseTele);
@@ -463,7 +463,7 @@ public class Blue extends OpMode {
         if (slowDrive) {
             follower.setMaxPower(0.5);
         } else {
-            follower.setMaxPower(0.9);
+            follower.setMaxPower(1);
         }
 
         follower.setTeleOpDrive(leftY, -leftX, 0.75 * (g1.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) - g1.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER)), true);

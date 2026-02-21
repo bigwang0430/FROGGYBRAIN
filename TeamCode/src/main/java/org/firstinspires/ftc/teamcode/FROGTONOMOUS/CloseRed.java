@@ -372,7 +372,7 @@ public class CloseRed extends CommandOpMode {
                 l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
             }
 
-            if (launchPIDF.atSetPoint() && robotZone.isInside(closeLaunchZone) && !follower.isBusy() && turretPIDF.atSetPoint()) {//TODO MAYBE REMOVE TURRETPIDF
+            if (launchPIDF.atSetPoint() && robotZone.isInside(closeLaunchZone) && !follower.isBusy()) {//TODO MAYBE REMOVE TURRETPIDF
                 gate.set(globals.gate.open);
                 intake.set(1);
                 transfer.set(1);
@@ -477,17 +477,17 @@ public class CloseRed extends CommandOpMode {
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(3000),
+                        new WaitCommand(2800),
                         new froggylaunch(everythingsubsystem),
                         new FollowPathCommand(follower, Path6)
                 ),
                         new FollowPathCommand(follower, Path7),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(1500),
+                        new WaitCommand(1300),
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(3000),
+                        new WaitCommand(2800),
                         new froggylaunch(everythingsubsystem),
                         new FollowPathCommand(follower, Path8)
                 ),

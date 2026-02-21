@@ -81,7 +81,7 @@ public class FarRedPMSS extends CommandOpMode {
 
                                 new Pose(10.000, 9.00).mirror()
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setConstantHeadingInterpolation(Math.toRadians(0))
 
                 .build();
 
@@ -91,7 +91,7 @@ public class FarRedPMSS extends CommandOpMode {
 
                                 new Pose(44.000, 9.00).mirror()
                         )
-                ).setConstantHeadingInterpolation(Math.toRadians(180))
+                ).setConstantHeadingInterpolation(Math.toRadians(0))
 
                 .build();
 
@@ -297,7 +297,7 @@ public class FarRedPMSS extends CommandOpMode {
                 l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
             }
 
-            if (launchPIDF.atSetPoint() && robotZone.isInside(farLaunchZone) && !follower.isBusy() && turretPIDF.atSetPoint()) {//TODO MAYBE REMOVE TURRETPIDF
+            if (launchPIDF.atSetPoint() && robotZone.isInside(farLaunchZone) && !follower.isBusy()) {//TODO MAYBE REMOVE TURRETPIDF
                 gate.set(globals.gate.open);
                 intake.set(0.7);//57
                 transfer.set(0.7);//57
@@ -310,6 +310,7 @@ public class FarRedPMSS extends CommandOpMode {
             l2.set(0.2);
             intake.set(0);
             transfer.set(0);
+            shootnum++;
         }
 
         @Override

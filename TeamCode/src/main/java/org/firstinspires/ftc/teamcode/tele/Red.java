@@ -39,7 +39,7 @@ import java.util.Objects;
 public class Red extends OpMode {
     private final PolygonZone closeLaunchZone = new PolygonZone(new Point(144, 144), new Point(72, 72), new Point(0, 144));
     private final PolygonZone farLaunchZone = new PolygonZone(new Point(48, 0), new Point(72, 24), new Point(96, 0));
-    private final PolygonZone robotZone = new PolygonZone(16, 16);
+    private final PolygonZone robotZone = new PolygonZone(19, 19);
 
     private Motor l1, l2, intake, transfer;
     private ServoEx hood, gate, tiltl, tiltr;
@@ -380,7 +380,7 @@ public class Red extends OpMode {
 
 
         if (autoAim) {
-            if (Math.abs(turretPIDF.getPositionError()) > 1000) {
+            if (Math.abs(turretPIDF.getPositionError()) > 1500) {
                 turretPIDF.setP(globals.turret.pFarTele);
             } else {
                 turretPIDF.setP(globals.turret.pCloseTele);

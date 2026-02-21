@@ -260,7 +260,7 @@ public class FarBlueStandard extends CommandOpMode {
             double x = follower.getPose().getX();
             double y = follower.getPose().getY();
             Pose robot = new Pose(x, y);
-            Pose goal = new Pose(globals.turret.goalX, globals.turret.goalY);//TODO
+            Pose goal = new Pose(globals.turret.blueGoalX, globals.turret.goalY);//TODO
             robotZone.setPosition(x, y);
             robotZone.setRotation(follower.getPose().getHeading());
 
@@ -334,7 +334,7 @@ public class FarBlueStandard extends CommandOpMode {
                 l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
             }
 
-            if (launchPIDF.atSetPoint() && robotZone.isInside(farLaunchZone) && !follower.isBusy() && turretPIDF.atSetPoint()) {//TODO MAYBE REMOVE TURRETPIDF
+            if (launchPIDF.atSetPoint() && robotZone.isInside(farLaunchZone) && !follower.isBusy()) {//TODO MAYBE REMOVE TURRETPIDF
                 gate.set(globals.gate.open);
                 intake.set(0.7);//57
                 transfer.set(0.7);//57
@@ -347,6 +347,7 @@ public class FarBlueStandard extends CommandOpMode {
             l2.set(0.2);
             intake.set(0);
             transfer.set(0);
+            shootnum++;
         }
 
         @Override
