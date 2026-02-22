@@ -106,7 +106,7 @@ public class CloseBlue extends CommandOpMode {
 
                                 new Pose(12.448, 59.776)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(147))
+                ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(149))
 
                 .build();
 
@@ -116,7 +116,7 @@ public class CloseBlue extends CommandOpMode {
 
                                 new Pose(54.000, 81.000)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(147), Math.toRadians(132))
+                ).setLinearHeadingInterpolation(Math.toRadians(149), Math.toRadians(132))
 
                 .build();
 
@@ -124,19 +124,19 @@ public class CloseBlue extends CommandOpMode {
                         new BezierLine(
                                 new Pose(54.000, 81.000),
 
-                                new Pose(12.448, 59.776)
+                                new Pose(12, 59.776)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(132), Math.toRadians(147))
+                ).setLinearHeadingInterpolation(Math.toRadians(132), Math.toRadians(151))
 
                 .build();
 
         Path8 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(12.448, 59.776),
+                                new Pose(12, 59.776),
 
                                 new Pose(54.000, 81.000)
                         )
-                ).setLinearHeadingInterpolation(Math.toRadians(147), Math.toRadians(180))
+                ).setLinearHeadingInterpolation(Math.toRadians(151), Math.toRadians(180))
 
                 .build();
 
@@ -457,7 +457,7 @@ public class CloseBlue extends CommandOpMode {
 
         froggyroute = new SequentialCommandGroup(
                 new ParallelDeadlineGroup(
-                        new WaitCommand(2800),
+                        new WaitCommand(2700),
                         new froggylaunch(everythingsubsystem),
                         new FollowPathCommand(follower, Path1)
                 ),
@@ -473,7 +473,7 @@ public class CloseBlue extends CommandOpMode {
                 ),
                         new FollowPathCommand(follower, Path5),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(1000),
+                        new WaitCommand(1300),
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
@@ -487,7 +487,7 @@ public class CloseBlue extends CommandOpMode {
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(2800),
+                        new WaitCommand(2700),
                         new froggylaunch(everythingsubsystem),
                         new FollowPathCommand(follower, Path8)
                 ),

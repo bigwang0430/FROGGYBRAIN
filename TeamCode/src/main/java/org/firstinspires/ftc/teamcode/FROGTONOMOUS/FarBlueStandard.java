@@ -424,7 +424,10 @@ public class FarBlueStandard extends CommandOpMode {
                         new froggylaunch(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
-                        new FollowPathCommand(follower, Path1),
+                        new SequentialCommandGroup(
+                                new FollowPathCommand(follower, Path1),
+                                new WaitCommand(500)
+                        ),
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
