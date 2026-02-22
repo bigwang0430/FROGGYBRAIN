@@ -42,7 +42,7 @@ public class Blue extends OpMode {
     private final PolygonZone robotZone = new PolygonZone(19, 19);
     
     private Motor l1, l2, intake, transfer;
-    private ServoEx hood, gate, tiltl, tiltr;
+    private ServoEx hood, gate, tiltl, tiltr, lights;
     private CRServoEx t1, t2;
     private PIDController turretPIDF = new PIDController(globals.turret.pFarTele, globals.turret.i, globals.turret.d);
     private AnalogInput turretEncoder;
@@ -131,6 +131,12 @@ public class Blue extends OpMode {
         intake.setInverted(false);
         intake.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
         transfer.setZeroPowerBehavior(Motor.ZeroPowerBehavior.FLOAT);
+
+
+        lights = new ServoEx(hardwareMap, "lights");
+        lights.set(0);
+        tiltl = new ServoEx(hardwareMap, "tiltl");
+        tiltr = new ServoEx(hardwareMap, "tiltr");
 
         hood = new ServoEx(hardwareMap, "hood", 300);
 
@@ -464,6 +470,16 @@ public class Blue extends OpMode {
             follower.setMaxPower(0.5);
         } else {
             follower.setMaxPower(1);
+        }
+
+        if (g1.getButton(GamepadKeys.Button.SQUARE)) {
+            lights.set(0.28);
+            tiltl.set(0.72);
+            tiltr.set(0.28);
+        } else {
+            lights.set(0.17);
+            tiltl.set(0.83);
+            tiltr.set(0);
         }
 
         follower.setTeleOpDrive(leftY, -leftX, 0.75 * (g1.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) - g1.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER)), true);

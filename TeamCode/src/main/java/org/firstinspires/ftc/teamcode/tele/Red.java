@@ -15,6 +15,7 @@ import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.AnalogInput;
+import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
 import com.seattlesolvers.solverslib.controller.PIDController;
 import com.seattlesolvers.solverslib.controller.SquIDFController;
@@ -42,7 +43,7 @@ public class Red extends OpMode {
     private final PolygonZone robotZone = new PolygonZone(19, 1);
 
     private Motor l1, l2, intake, transfer;
-    private ServoEx hood, gate, tiltl, tiltr;
+    private ServoEx hood, gate, tiltl, tiltr, lights;
     private CRServoEx t1, t2;
     private PIDController turretPIDF = new PIDController(globals.turret.pFarTele, globals.turret.i, globals.turret.d);
     private AnalogInput turretEncoder;
@@ -122,6 +123,11 @@ public class Red extends OpMode {
         intake = new Motor(hardwareMap, "intake");
         intake.stopAndResetEncoder();
         intake.resetEncoder();
+
+        tiltl = new ServoEx(hardwareMap, "tiltl");
+        tiltr = new ServoEx(hardwareMap, "tiltr");
+        lights = new ServoEx(hardwareMap, "lights");
+        lights.set(0);
 
 
         transfer = new Motor(hardwareMap, "transfer");
@@ -453,6 +459,15 @@ public class Red extends OpMode {
         if (g1.getButton(GamepadKeys.Button.DPAD_LEFT)) {
             follower.setPose(new Pose(144-15, 79, Math.toRadians(90)));
 
+        }
+        if (g1.getButton(GamepadKeys.Button.SQUARE)) {
+            lights.set(0.28);
+            tiltl.set(0.72);
+            tiltr.set(0.28);
+        } else {
+            lights.set(0.17);
+            tiltl.set(0.83);
+            tiltr.set(0);
         }
 
 
