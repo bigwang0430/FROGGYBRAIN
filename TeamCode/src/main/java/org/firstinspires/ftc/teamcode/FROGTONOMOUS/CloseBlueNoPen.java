@@ -499,7 +499,7 @@ public class CloseBlueNoPen extends CommandOpMode {
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(2000),
+                        new WaitCommand(2100),
                         new froggylaunch(everythingsubsystem),
                         new FollowPathCommand(follower, Path11)
                 ),

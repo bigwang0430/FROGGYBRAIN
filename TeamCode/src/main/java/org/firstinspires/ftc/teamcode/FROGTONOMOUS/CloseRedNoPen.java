@@ -96,7 +96,7 @@ public class CloseRedNoPen extends CommandOpMode {
                         new BezierLine(
                                 new Pose(23.000, 60.000).mirror(),
 
-                                new Pose(53.794392523364486, 76.2056074766355).mirror()
+                                new Pose(52.794392523364486, 76.2056074766355).mirror()
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(0))
 
@@ -104,7 +104,7 @@ public class CloseRedNoPen extends CommandOpMode {
 
         Path5 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(53.794392523364486, 76.2056074766355).mirror(),
+                                new Pose(52.794392523364486, 76.2056074766355).mirror(),
 
                                 new Pose(16.5, 64).mirror()
                         )
@@ -478,8 +478,8 @@ public class CloseRedNoPen extends CommandOpMode {
                         new FollowPathCommand(follower, Path4)
                 ),
 
-                new FollowPathCommand(follower, Path5),
-                new WaitCommand(500),
+                new FollowPathCommand(follower, Path5, 0.6),
+                new WaitCommand(1000),
                 new FollowPathCommand(follower, Path6),
                 new ParallelDeadlineGroup(
                         new SequentialCommandGroup(
