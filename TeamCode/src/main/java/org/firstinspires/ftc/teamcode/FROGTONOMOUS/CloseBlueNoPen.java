@@ -96,7 +96,7 @@ public class CloseBlueNoPen extends CommandOpMode {
                         new BezierLine(
                                 new Pose(23.000, 60.000),
 
-                                new Pose(53.794392523364486, 76.2056074766355)
+                                new Pose(52.794392523364486, 76.2056074766355)
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(180))
 
@@ -104,7 +104,7 @@ public class CloseBlueNoPen extends CommandOpMode {
 
         Path5 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(53.794392523364486, 76.2056074766355),
+                                new Pose(52.794392523364486, 76.2056074766355),
 
                                 new Pose(16.5, 64)
                         )
@@ -479,7 +479,7 @@ public class CloseBlueNoPen extends CommandOpMode {
                 ),
 
                 new FollowPathCommand(follower, Path5, 0.6),
-                new WaitCommand(1500),
+                new WaitCommand(1000),
                 new FollowPathCommand(follower, Path6),
                 new ParallelDeadlineGroup(
                         new SequentialCommandGroup(
