@@ -477,9 +477,9 @@ public class Blue extends OpMode {
             tiltl.set(0.72);
             tiltr.set(0.28);
         } else {
-            lights.set(0.17);
+            lights.set(0);
             tiltl.set(0.83);
-            tiltr.set(0);
+            tiltr.set(0.17);
         }
 
         follower.setTeleOpDrive(leftY, -leftX, 0.75 * (g1.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) - g1.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER)), true);

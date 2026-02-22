@@ -444,7 +444,7 @@ public class Red extends OpMode {
 
         if (g1.getButton(GamepadKeys.Button.DPAD_UP)) {
 
-            follower.setPose(new Pose(144 - 8.5, 9, Math.toRadians(0)));
+            follower.setPose(new Pose(142 - 8.5, 9, Math.toRadians(0)));
         }
 
         if (g1.getButton(GamepadKeys.Button.DPAD_RIGHT)) {
@@ -453,11 +453,11 @@ public class Red extends OpMode {
         }
         if (g1.getButton(GamepadKeys.Button.DPAD_DOWN)) {
 
-            follower.setPose(new Pose(144-135, 9, Math.toRadians(180)));
+            follower.setPose(new Pose(142-135, 9, Math.toRadians(180)));
 
         }
         if (g1.getButton(GamepadKeys.Button.DPAD_LEFT)) {
-            follower.setPose(new Pose(144-15, 79, Math.toRadians(90)));
+            follower.setPose(new Pose(142-15, 79, Math.toRadians(90)));
 
         }
         if (g1.getButton(GamepadKeys.Button.SQUARE)) {
@@ -465,9 +465,9 @@ public class Red extends OpMode {
             tiltl.set(0.72);
             tiltr.set(0.28);
         } else {
-            lights.set(0.17);
+            lights.set(0);
             tiltl.set(0.83);
-            tiltr.set(0);
+            tiltr.set(0.17);
         }
 
 
