@@ -201,10 +201,6 @@ public class Blue extends OpMode {
         FtcDashboard.getInstance().sendTelemetryPacket(powerPacket);
         FtcDashboard.getInstance().sendTelemetryPacket(rpmPacket);
 
-        telemetry.addData("terrr", turretZeroed);
-        telemetry.addData("pos", intake.getCurrentPosition());
-        telemetry.addData("tare", turretEncoder.getVoltage());
-        telemetry.addData("turretAng", turretAng);
 
         telemetry.update();
     }

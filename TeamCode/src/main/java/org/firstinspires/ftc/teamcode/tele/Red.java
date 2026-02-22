@@ -40,7 +40,7 @@ import java.util.Objects;
 public class Red extends OpMode {
     private final PolygonZone closeLaunchZone = new PolygonZone(new Point(144, 144), new Point(72, 72), new Point(0, 144));
     private final PolygonZone farLaunchZone = new PolygonZone(new Point(48, 0), new Point(72, 24), new Point(96, 0));
-    private final PolygonZone robotZone = new PolygonZone(19, 1);
+    private final PolygonZone robotZone = new PolygonZone(19, 19);
 
     private Motor l1, l2, intake, transfer;
     private ServoEx hood, gate, tiltl, tiltr, lights;
@@ -174,8 +174,6 @@ public class Red extends OpMode {
 
     @Override
     public void loop() {
-
-
         follower.update();
         RPM();
         launchCalc();
@@ -201,10 +199,7 @@ public class Red extends OpMode {
         FtcDashboard.getInstance().sendTelemetryPacket(powerPacket);
         FtcDashboard.getInstance().sendTelemetryPacket(rpmPacket);
 
-        telemetry.addData("terrr", turretZeroed);
-        telemetry.addData("pos", intake.getCurrentPosition());
-        telemetry.addData("tare", turretEncoder.getVoltage());
-        telemetry.addData("turretAng", turretAng);
+
 
         telemetry.update();
     }
