@@ -223,7 +223,7 @@ public class FarRedPMSS extends CommandOpMode {
             double x = follower.getPose().getX();
             double y = follower.getPose().getY();
             Pose robot = new Pose(x, y);
-            Pose goal = new Pose(142 - globals.turret.goalX, globals.turret.goalY);
+            Pose goal = new Pose(141 - globals.turret.redGoalX, globals.turret.goalY);
             robotZone.setPosition(x, y);
             robotZone.setRotation(follower.getPose().getHeading());
 
@@ -399,7 +399,10 @@ public class FarRedPMSS extends CommandOpMode {
                         new FollowPathCommand(follower, Path2)
                 ),
                 new ParallelDeadlineGroup(
-                        new FollowPathCommand(follower, Path3),
+                        new SequentialCommandGroup(
+                                new FollowPathCommand(follower, Path3),
+                                new WaitCommand(500)
+                        ),
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
@@ -418,7 +421,10 @@ public class FarRedPMSS extends CommandOpMode {
                         new FollowPathCommand(follower, Path7)
                 ),
                 new ParallelDeadlineGroup(
-                        new FollowPathCommand(follower, Path8),
+                        new SequentialCommandGroup(
+                                new FollowPathCommand(follower, Path8),
+                                new WaitCommand(500)
+                        ),
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(

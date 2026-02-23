@@ -457,7 +457,7 @@ public class CloseRed extends CommandOpMode {
 
         froggyroute = new SequentialCommandGroup(
                 new ParallelDeadlineGroup(
-                        new WaitCommand(2800),
+                        new WaitCommand(2700),
                         new froggylaunch(everythingsubsystem),
                         new FollowPathCommand(follower, Path1)
                 ),
@@ -473,7 +473,7 @@ public class CloseRed extends CommandOpMode {
                 ),
                         new FollowPathCommand(follower, Path5),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(1000),
+                        new WaitCommand(1500),
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
@@ -483,11 +483,11 @@ public class CloseRed extends CommandOpMode {
                 ),
                         new FollowPathCommand(follower, Path7),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(1300),
+                        new WaitCommand(1500),
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(2800),
+                        new WaitCommand(2700),
                         new froggylaunch(everythingsubsystem),
                         new FollowPathCommand(follower, Path8)
                 ),

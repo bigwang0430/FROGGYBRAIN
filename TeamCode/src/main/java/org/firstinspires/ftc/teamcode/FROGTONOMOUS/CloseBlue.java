@@ -473,7 +473,7 @@ public class CloseBlue extends CommandOpMode {
                 ),
                         new FollowPathCommand(follower, Path5),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(1300),
+                        new WaitCommand(1500),
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
@@ -483,7 +483,7 @@ public class CloseBlue extends CommandOpMode {
                 ),
                         new FollowPathCommand(follower, Path7),
                 new ParallelDeadlineGroup(
-                        new WaitCommand(1300),
+                        new WaitCommand(1500),
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(

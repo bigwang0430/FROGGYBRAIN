@@ -399,7 +399,10 @@ public class FarBluePMSS extends CommandOpMode {
                         new FollowPathCommand(follower, Path2)
                 ),
                 new ParallelDeadlineGroup(
-                        new FollowPathCommand(follower, Path3),
+                        new SequentialCommandGroup(
+                                new FollowPathCommand(follower, Path3),
+                                new WaitCommand(500)
+                        ),
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(
@@ -418,7 +421,10 @@ public class FarBluePMSS extends CommandOpMode {
                         new FollowPathCommand(follower, Path7)
                 ),
                 new ParallelDeadlineGroup(
-                        new FollowPathCommand(follower, Path8),
+                        new SequentialCommandGroup(
+                                new FollowPathCommand(follower, Path8),
+                                new WaitCommand(500)
+                        ),
                         new froggyeat(everythingsubsystem)
                 ),
                 new ParallelDeadlineGroup(

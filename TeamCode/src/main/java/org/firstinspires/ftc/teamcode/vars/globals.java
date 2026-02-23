@@ -45,6 +45,7 @@ public class globals {
         public static float turretOffset = 0F;
         public static float goalY = 142;
         public static float blueGoalX = 3;
+        public static float redGoalX = 1.5F;
         public static float goalX = 6;
         public static float closeGoalX = 0;
         public static float closeGoalY = 141.5F;

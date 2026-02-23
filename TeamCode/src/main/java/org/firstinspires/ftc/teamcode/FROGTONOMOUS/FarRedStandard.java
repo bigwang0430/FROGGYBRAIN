@@ -137,29 +137,21 @@ public class FarRedStandard extends CommandOpMode {
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(0))
                 .build();
-        Path2 = follower.pathBuilder().addPath(
+
+
+        Path10 = follower.pathBuilder().addPath(
                         new BezierLine(
                                 new Pose(10.000, 9.00).mirror(),
 
                                 new Pose(44.000, 9.00).mirror()
-                        )
-                ).setConstantHeadingInterpolation(Math.toRadians(0))
-
-                .build();
-
-        Path10 = follower.pathBuilder().addPath(
-                        new BezierLine(
-                                new Pose(44.000, 9.00).mirror(),
-
-                                new Pose(10.000, 9.00).mirror()
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(0))
                 .build();
         Path11 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(10.000, 9.00).mirror(),
+                                new Pose(44.000, 9.00).mirror(),
 
-                                new Pose(44.000, 9.00).mirror()
+                                new Pose(10.000, 9.00).mirror()
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(0))
 
@@ -167,31 +159,23 @@ public class FarRedStandard extends CommandOpMode {
 
         Path12 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(44.000, 9.00).mirror(),
+                                new Pose(10.000, 9.00).mirror(),
 
-                                new Pose(10.000, 9.00).mirror()
+                                new Pose(44.000, 9.00).mirror()
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(0))
                 .build();
 
         Path13 = follower.pathBuilder().addPath(
                         new BezierLine(
-                                new Pose(10.000, 9.00).mirror(),
-
-                                new Pose(44.000, 9.00).mirror()
-                        )
-                ).setConstantHeadingInterpolation(Math.toRadians(0))
-
-                .build();
-
-        Path14 = follower.pathBuilder().addPath(
-                        new BezierLine(
                                 new Pose(44.000, 9.00).mirror(),
 
-                                new Pose(30.000, 9.00).mirror()
+                                new Pose(10.000, 9.00).mirror()
                         )
                 ).setConstantHeadingInterpolation(Math.toRadians(0))
+
                 .build();
+
     }
 
     //SUBSYSTEMS///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -260,7 +244,7 @@ public class FarRedStandard extends CommandOpMode {
             double x = follower.getPose().getX();
             double y = follower.getPose().getY();
             Pose robot = new Pose(x, y);
-            Pose goal = new Pose(142 - globals.turret.goalX, globals.turret.goalY);//TODO
+            Pose goal = new Pose(141 - globals.turret.redGoalX, globals.turret.goalY);//TODO
             robotZone.setPosition(x, y);
             robotZone.setRotation(follower.getPose().getHeading());
 
@@ -483,8 +467,7 @@ public class FarRedStandard extends CommandOpMode {
                 new ParallelDeadlineGroup(
                         new FollowPathCommand(follower, Path13),
                         new froggyeat(everythingsubsystem)
-                ),
-                new FollowPathCommand(follower, Path14)
+                )
         );
     }
 

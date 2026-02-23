@@ -40,7 +40,7 @@ import java.util.Objects;
 public class Red extends OpMode {
     private final PolygonZone closeLaunchZone = new PolygonZone(new Point(144, 144), new Point(72, 72), new Point(0, 144));
     private final PolygonZone farLaunchZone = new PolygonZone(new Point(48, 0), new Point(72, 24), new Point(96, 0));
-    private final PolygonZone robotZone = new PolygonZone(19, 19);
+    private final PolygonZone robotZone = new PolygonZone(17, 17);
 
     private Motor l1, l2, intake, transfer;
     private ServoEx hood, gate, tiltl, tiltr, lights;
@@ -169,7 +169,8 @@ public class Red extends OpMode {
 
 
         turretZeroOffset = Math.abs(turretEncoder.getVoltage()) < 0.005 ? 0 : (degresToTicks(voltageToDegrees(turretEncoder.getVoltage() - 1.6)) * 2) + globals.turret.turretOffset;
-
+        tiltl.set(0.83);
+        tiltr.set(0.17);
     }
 
     @Override
@@ -267,7 +268,11 @@ public class Red extends OpMode {
     }
 
     private void launchCalc() {
-
+        if (robotZone.isInside(closeLaunchZone) || robotZone.isInside(farLaunchZone)) {
+            lights.set(0.5);
+        } else {
+            lights.set(0);
+        }
 
         double x = follower.getPose().getX();
         double y = follower.getPose().getY();
@@ -275,7 +280,7 @@ public class Red extends OpMode {
         robotZone.setPosition(x, y);
         robotZone.setRotation(follower.getPose().getHeading());
         Pose goal = new Pose(142 - globals.turret.goalX, globals.turret.goalY);
-        if (follower.getVelocity().getMagnitude() < 6 ) {
+        if (follower.getVelocity().getMagnitude() < 6 || robotZone.isInside(farLaunchZone)) {
             currentLaunchMode = launchMode.normal;
         } else {
             currentLaunchMode = launchMode.SOTM;
@@ -455,15 +460,15 @@ public class Red extends OpMode {
             follower.setPose(new Pose(142-15, 79, Math.toRadians(90)));
 
         }
-        if (g1.getButton(GamepadKeys.Button.SQUARE)) {
-            lights.set(0.28);
-            tiltl.set(0.72);
-            tiltr.set(0.28);
-        } else {
-            lights.set(0);
-            tiltl.set(0.83);
-            tiltr.set(0.17);
-        }
+//        if (g1.getButton(GamepadKeys.Button.SQUARE)) {
+//            lights.set(0.28);
+//            tiltl.set(0.72);
+//            tiltr.set(0.28);
+//        } else {
+//            lights.set(0);
+//            tiltl.set(0.83);
+//            tiltr.set(0.17);
+//        }
 
 
         if (g1.getButton(GamepadKeys.Button.CROSS) && !prevCross1) {
