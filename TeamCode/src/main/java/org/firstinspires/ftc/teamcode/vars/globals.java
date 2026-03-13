@@ -57,6 +57,8 @@ public class globals {
         public static float pCloseTele = 0.000006F;
         public static float pCloseAuto = 0.000006F; //0.0000035
 
+        public static float offset = 0F;
+
 
         public static float turretTarget = 0F;
 
