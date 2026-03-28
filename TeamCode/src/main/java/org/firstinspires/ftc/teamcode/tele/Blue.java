@@ -11,6 +11,7 @@ import com.pedropathing.math.MathFunctions;
 import com.pedropathing.math.Vector;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.limelightvision.LLResult;
+import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
@@ -34,6 +35,7 @@ import org.firstinspires.ftc.teamcode.pedroPathing.Constants;
 import org.firstinspires.ftc.teamcode.vars.states;
 
 import java.sql.SQLData;
+import java.util.List;
 import java.util.Objects;
 
 @TeleOp(name = "Blue")
@@ -93,8 +95,15 @@ public class Blue extends OpMode {
     private ElapsedTime relocTimer = new ElapsedTime();
     private boolean relocReady = false;
     private double initialTurretOffset = 0F;
+    private double filteredAccelMag = 0;
+    private double filteredAccelAngle = 0F;
+    private Limelight3A limelight;
+    private FtcDashboard dashboard;
+
+
     @Override
     public void init() {
+
         relocTimer.startTime();
         timer.startTime();
         GoBildaPinpointDriver pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
@@ -165,10 +174,18 @@ public class Blue extends OpMode {
             odoPose = p;
         }
 
-
+        limelight = hardwareMap.get(Limelight3A.class, "limelight");
+        limelight.setPollRateHz(20);
+        limelight.pipelineSwitch(0);
+        limelight.start();
         turretZeroOffset = Math.abs(turretEncoder.getVoltage()) < 0.005 ? 0 : (degresToTicks(voltageToDegrees(turretEncoder.getVoltage() - 1.6)) * 2) + globals.turret.turretOffset;
         tiltl.set(0.83);
         tiltr.set(0.17);
+
+
+        dashboard = FtcDashboard.getInstance();
+        dashboard.startCameraStream(limelight, 30);
+
     }
 
     @Override
@@ -179,7 +196,7 @@ public class Blue extends OpMode {
         drive();
         launch();
         drawRobot(follower.getPose(), robotLook);
-
+        turretAim();
 
         telemetry();
     }
@@ -189,15 +206,27 @@ public class Blue extends OpMode {
         telemetry.addData("robotLocation", robotLocation);
 
 
-        TelemetryPacket rpmPacket = new TelemetryPacket();
-        rpmPacket.put("RPM", RPM);
+        TelemetryPacket ang = new TelemetryPacket();
+        ang.put("ang", follower.getAcceleration().getTheta());
 
-        TelemetryPacket powerPacket = new TelemetryPacket();
-        powerPacket.put("targetRPM", targetRPM);
+        TelemetryPacket fang = new TelemetryPacket();
+        fang.put("fang", filteredAccelAngle);
 
-        FtcDashboard.getInstance().sendTelemetryPacket(powerPacket);
-        FtcDashboard.getInstance().sendTelemetryPacket(rpmPacket);
+        TelemetryPacket mag = new TelemetryPacket();
+        mag.put("mag", follower.getAcceleration().getMagnitude());
 
+        TelemetryPacket fmag = new TelemetryPacket();
+        fmag.put("fmag", filteredAccelMag);
+
+        TelemetryPacket distance = new TelemetryPacket();
+        distance.put("dist", dist);
+
+        FtcDashboard.getInstance().sendTelemetryPacket(ang);
+        FtcDashboard.getInstance().sendTelemetryPacket(fang);
+        FtcDashboard.getInstance().sendTelemetryPacket(distance);
+
+        FtcDashboard.getInstance().sendTelemetryPacket(mag);
+        FtcDashboard.getInstance().sendTelemetryPacket(fmag);
 
 
         telemetry.update();
@@ -238,7 +267,7 @@ public class Blue extends OpMode {
                     l2.set(launchPower + globals.launcher.kv * targetRPM + globals.launcher.ks);
                 }
 
-                hood.set(MathFunctions.clamp(hoodAngle, 40, 211.5));
+                hood.set(MathFunctions.clamp(globals.hood.angle, 40, 211.5));
                 if ((g2.getButton(GamepadKeys.Button.TRIANGLE) || g1.getButton(GamepadKeys.Button.TRIANGLE)) && !launchPIDF.atSetPoint()) {
                     intake.set(1.0);
                     transfer.set(0.5);
@@ -288,15 +317,13 @@ public class Blue extends OpMode {
             case SOTM:
                 dist = goal.minus(robot).getAsVector().getMagnitude();
 
-                double accelMag = Math.floor(follower.getAcceleration().getMagnitude());
-                double accelAngle = Math.toRadians(Math.floor(Math.toDegrees(follower.getAcceleration().getTheta())));
+                double accelMag = follower.getAcceleration().getMagnitude();
+                filteredAccelMag = globals.launcher.accelAlpha * accelMag + (1-globals.launcher.accelAlpha) * filteredAccelMag;
+                double accelAngle = follower.getAcceleration().getTheta();
+                filteredAccelAngle = globals.launcher.accelAlpha * accelAngle + (1-globals.launcher.accelAlpha) * filteredAccelAngle;
                 Vector accel = new Vector(accelMag, accelAngle); // calculate acceleration rounded to nearest inch/s, nearest degree (in inch/s^2, rad)
-
-                Vector velocity = follower.getVelocity().plus(
-                        new Vector(accel.getMagnitude()
-                                * globals.launcher.velTime, accel.getTheta())); // create a velocity vector by using v = u + at
-
-                double distanceDiff = velocity.getMagnitude() * (0.0025 * dist + 0.3871);
+                Vector velocity = follower.getVelocity().plus(new Vector(accel.getMagnitude() * globals.launcher.velTime, accel.getTheta())); // create a velocity vector by using v = u + at
+                double distanceDiff = velocity.getMagnitude() * (0.0025 * dist + 0.3871); //calculate distance by using an expiremental relation of distance vs time
                 Vector robotVelocity = new Vector(distanceDiff, velocity.getTheta());
                 Pose newGoal = new Pose(-robotVelocity.getXComponent() + goal.getX(), -robotVelocity.getYComponent() + goal.getY());
 
@@ -345,21 +372,37 @@ public class Blue extends OpMode {
             robotLocation = "No Zone";
         }
 
-        if (Math.abs(turretAng) > 120) {
+
+
+    }
+
+    private void turretAim() {
+        if (Math.abs(turretAng) > 150) {
             turretAng = 0;
             turretInRange = false;
         } else  {
             turretInRange = true;
         }
 
+
+            LLResult result = limelight.getLatestResult();
+            if (result != null && result.isValid()) {
+                if (result.getStaleness() < 500) {
+                    List<LLResultTypes.FiducialResult> tags = result.getFiducialResults();
+                    if (!tags.isEmpty()) {
+                        for (LLResultTypes.FiducialResult tag : tags) {
+                                dist = tag.getTargetXDegrees();
+                                telemetry.addData("dist", dist);
+
+                        }
+                    }
+                }
+            }
+
+
         double set = MathFunctions.clamp( 180 + (turretAng * 3)/2, globals.turret.offset, 360-globals.turret.offset);
-        if (Math.abs(set - previousSet) > 0.5) {
-            t1.set(set);
-            t2.set(set + globals.turret.offset);
-        }
-        previousSet = set;
-
-
+        t1.set(set);
+        t2.set(set + globals.turret.offset);
     }
     private double degresToTicks(double degree) {
         return (degree * 8192) / 360;

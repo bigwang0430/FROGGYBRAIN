@@ -12,8 +12,9 @@ public class globals {
         public static float d = 0F;
         public static float ks = 0.001F; //0.0000216
         public static float kv = 0.00018F; //0.000000120871
-        public static float velTime = 0.07F;
+        public static float velTime = 0.1F;
         public static float airSortThreshold = 20F;
+        public static float accelAlpha = 0.3F;
 
     }
 
@@ -57,14 +58,17 @@ public class globals {
         public static float pCloseTele = 0.000006F;
         public static float pCloseAuto = 0.000006F; //0.0000035
 
-        public static float offset = 0F;
+        public static float offset = 1.8F;
 
 
         public static float turretTarget = 0F;
 
     }
 
-
+@Config
+public static class hood{
+        public static float angle = 150F;
+}
 @Config
     public static class offsets{
         public static double xoff = 85;
