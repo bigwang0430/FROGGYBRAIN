@@ -15,7 +15,7 @@ public class globals {
         public static float velTime = 0.1F;
         public static float airSortThreshold = 20F;
         public static float accelAlpha = 0.3F;
-
+        public static float targetRPM = 3000F;
     }
 
 

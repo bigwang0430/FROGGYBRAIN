@@ -19,21 +19,20 @@ import org.firstinspires.ftc.teamcode.vars.globals;
 @TeleOp(name = "turretttestt")
 public class turretTest extends OpMode {
     private PIDController turretPIDF = new PIDController(globals.turret.pFarTele, globals.turret.i, globals.turret.d);
-    private CRServoEx t1, t2;
+    private ServoEx t1, t2;
     private AnalogInput turretEncoder;
     private Motor intake;
 
     @Override
     public void init() {
-        t1 = new CRServoEx(hardwareMap, "t1");
-        t2 = new CRServoEx(hardwareMap, "t2");
+        t1 = new ServoEx(hardwareMap, "t1", 360);
+        t2 = new ServoEx(hardwareMap, "t2", 360);
         t2.setInverted(true);
         t1.setInverted(true);
         turretEncoder = hardwareMap.get(AnalogInput.class, "turretEncoder");
         intake = new Motor(hardwareMap, "intake");
         turretPIDF.setTolerance(67);
-        t1.set(0.01);
-        t2.set(0.01);
+
 
     }
 
@@ -59,8 +58,8 @@ public class turretTest extends OpMode {
 //            t2.set(0);
 //        }
 
-        t1.set(0);
-        t2.set(0);
+        t1.set(180);
+        t2.set(180);
 
         telemetry.addData("voltage", turretEncoder.getVoltage());
         TelemetryPacket rpmPacket = new TelemetryPacket();
